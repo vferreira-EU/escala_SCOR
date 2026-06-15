@@ -1,1185 +1,153 @@
-class WindowComponent {
-
-    map; poligonoLayer; poligonoSource;
-    wazeTrafegoLayer; wazeTrafegoSource;
-    wazeAlertasLayer; wazeAlertasSource;
-    carrisLayer; carrisSource;
-    afluenciaHeatLayer; afluenciaHeatSource;
-    sensoresLayer; sensoresSource;
-    _sensoresLayerAdded = false;
-    gopisLayer; gopisSource;
-    sensoresAllData = [];
-    sensoresD1 = {};
-    estacaoQASelec = null;
-    estacaoRUSelec = null;
-    gridCoords = new Map();
-    devicesData = []; devicesLastUpdate = null; devicesMode = 'c3';
-    devicesMaxC3 = 1; devicesMaxC4 = 1;
-    routeNames = {};
-    refreshTimer; updateTimeout;
-    densidadeHistorico = [];
-    lastUpdateTime = null;
-
-    poligonoCoords = [
-        [-9.14859, 38.80371], [-9.08788, 38.79816],
-        [-9.09064, 38.75824], [-9.14743, 38.76003],
-        [-9.14859, 38.80371]
-    ];
-
-    quadriculasVodafone = [2623,2624,2625,2626,2627,2628,2629,2630,2631,2632,2633,2634,2635,2636,2637,2638,2639,2640,2641,2642,2643,2644,2645,2646,2647,2648,2649,2650,2651,2652,2653,2654,2685,2686,2687,2688,2689,2690,2691,2692,2693,2694,2695,2696,2697,2698,2699,2700,2701,2702,2703,2704,2705,2706,2707,2708,2709,2710,2711,2712,2713,2714,2715,2746,2747,2748,2749,2750,2751,2752,2753,2754,2755,2756,2757,2758,2759,2760,2761,2762,2763,2764,2765,2766,2767,2768,2769,2770,2771,2772,2773,2774,2775,2776,2807,2808,2809,2810,2811,2812,2813,2814,2815,2816,2817,2818,2819,2820,2821,2822,2823,2824,2825,2826,2827,2828,2829,2830,2831,2832,2833,2834,2835,2836,2837,2867,2868,2869,2870,2871,2872,2873,2874,2875,2876,2877,2878,2879,2880,2881,2882,2883,2884,2885,2886,2887,2888,2889,2890,2891,2892,2893,2894,2895,2896,2926,2927,2928,2929,2930,2931,2932,2933,2934,2935,2936,2937,2938,2939,2940,2941,2942,2943,2944,2945,2946,2947,2948,2949,2950,2951,2952,2953,2954,2955,2956,2986,2987,2988,2989,2990,2991,2992,2993,2994,2995,2996,2997,2998,2999,3000,3001,3002,3003,3004,3005,3006,3007,3008,3009,3010,3011,3012,3013,3014,3015,3016,3045,3046,3047,3048,3049,3050,3051,3052,3053,3054,3055,3056,3057,3058,3059,3060,3061,3062,3063,3064,3065,3066,3067,3068,3069,3070,3071,3072,3073,3074,3075,3103,3104,3105,3106,3107,3108,3109,3110,3111,3112,3113,3114,3115,3116,3117,3118,3119,3120,3121,3122,3123,3124,3125,3126,3127,3128,3129,3130,3131,3132,3133,3161,3162,3163,3164,3165,3166,3167,3168,3169,3170,3171,3172,3173,3174,3175,3176,3177,3178,3179,3180,3181,3182,3183,3184,3185,3186,3187,3188,3189,3190,3191,3217,3218,3219,3220,3221,3222,3223,3224,3225,3226,3227,3228,3229,3230,3231,3232,3233,3234,3235,3236,3237,3238,3239,3240,3241,3242,3243,3244,3245,3246,3247,3272,3273,3274,3275,3276,3277,3278,3279,3280,3281,3282,3283,3284,3285,3286,3287,3288,3289,3290,3291,3292,3293,3294,3295,3296,3297,3298,3299,3300,3301,3302,3303,3327,3328,3329,3330,3331,3332,3333,3334,3335,3336,3337,3338,3339,3340,3341,3342,3343,3344,3345,3346,3347,3348,3349,3350,3351,3352,3353,3376,3377,3378,3379,3380,3381,3382,3383,3384,3385,3386,3387,3388,3389,3390,3391,3392,3393,3394,3395,3396,3397,3398,3399,3400,3401,3402,3424,3425,3426,3427,3428,3429,3430,3431,3432,3433,3434,3435,3436,3437,3438,3439,3440,3441,3442,3443,3444,3445,3446,3447,3448,3449,3450,3470,3471,3472,3473,3474,3475,3476,3477,3478,3479,3480,3481,3482,3483,3484,3485,3486,3487,3488,3489,3490,3491,3492,3493,3494,3495,3511,3512,3513,3514,3515,3516,3517,3518,3519,3520,3521,3522,3523,3524,3525,3526,3527,3528,3529,3530,3531,3532,3533,3534,3535,3551,3552,3553,3554,3555,3556,3557,3558,3559,3560,3561,3562,3563,3564,3565,3566,3567,3568,3569,3570,3571,3572,3586,3587,3588,3589,3590,3591,3592,3593,3594,3595,3596,3597,3598,3599,3600,3601,3602,3603,3617,3618,3619,3620,3621,3622,3623,3624,3625,3626,3627,3628,3629,3641,3642,3643,3644,3645,3646,3647,3648,3649,3650,3651,3652,3663,3664,3665,3666,3667,3668,3669,3670,3671,3672,3681,3682,3683,3684,3685,3686,3687,3688,3697,3698,3699,3700,3701,3702,3703,3704,3712,3713,3714,3715,3716,3717,3718,3719,3726,3727,3728,3729,3730,3731,3732,3733,3736,3737,3738,3739,3740,3741,3742,3743];
-
-    linhasCarrisRIR = ['26B','705','708','728','744','759','781','782','208','731','779'];
-
-    gopiTipologias = {
-        "Higiene Urbana":"🗑️","Iluminação Pública":"💡","Animais em ambiente urbano":"🐾",
-        "Árvores e Espaços Verdes":"🌳","Estradas e Ciclovias":"🚗","Passeios e Acessibilidades":"🚶",
-        "Saneamento":"💧","Segurança Pública e Ruído":"🚨",
-        "Terrenos municipais e espaços não habitacionais":"🏞️"
-    };
-
-    // ─── Classificações ─────────────────────────────────────────
-
-    classificaAr(pm10, pm25, no2, o3) {
-        const niveis = [];
-        if (pm10 != null) { if (pm10>100) niveis.push(5); else if (pm10>50) niveis.push(4); else if (pm10>40) niveis.push(3); else if (pm10>20) niveis.push(2); else niveis.push(1); }
-        if (pm25 != null) { if (pm25>75) niveis.push(5); else if (pm25>50) niveis.push(4); else if (pm25>25) niveis.push(3); else if (pm25>15) niveis.push(2); else niveis.push(1); }
-        if (no2  != null) { if (no2>200)  niveis.push(5); else if (no2>100)  niveis.push(4); else if (no2>50)  niveis.push(3); else if (no2>25)  niveis.push(2); else niveis.push(1); }
-        if (o3   != null) { if (o3>240)   niveis.push(5); else if (o3>180)   niveis.push(4); else if (o3>120)  niveis.push(3); else if (o3>60)   niveis.push(2); else niveis.push(1); }
-        if (!niveis.length) return { nivel:0, label:'Sem dados', cor:'#888' };
-        const pior = Math.max(...niveis);
-        return { nivel:pior, ...{ 1:{label:'Bom',cor:'#3a9656'}, 2:{label:'Razoável',cor:'#a3c945'}, 3:{label:'Médio',cor:'#e8c547'}, 4:{label:'Fraco',cor:'#ff8a00'}, 5:{label:'Mau',cor:'#d64545'} }[pior] };
-    }
-
-    classificaRuido(laeq) {
-        if (laeq==null||isNaN(laeq)) return {nivel:0,label:'Sem dados',cor:'#888',emoji:'⚪'};
-        if (laeq<55) return {nivel:1,label:'Confortável',cor:'#3a9656',emoji:'🟢'};
-        if (laeq<65) return {nivel:2,label:'Moderado',cor:'#e8c547',emoji:'🟡'};
-        if (laeq<75) return {nivel:3,label:'Ruidoso',cor:'#ff8a00',emoji:'🟠'};
-        return {nivel:4,label:'Muito ruidoso',cor:'#d64545',emoji:'🔴'};
-    }
-
-    classificaTemp(t) {
-        if (t==null||isNaN(t)) return {label:'Sem dados',cor:'#888',emoji:'🌡️'};
-        if (t<10) return {label:'Muito frio',cor:'#5fa3ed',emoji:'🥶'};
-        if (t<18) return {label:'Fresco',cor:'#7fb3ed',emoji:'❄️'};
-        if (t<24) return {label:'Confortável',cor:'#3a9656',emoji:'😊'};
-        if (t<30) return {label:'Quente',cor:'#ff8a00',emoji:'☀️'};
-        return {label:'Muito quente',cor:'#d64545',emoji:'🥵'};
-    }
-
-    sanitizaTemp(v)     { const n=Number(v); return (!isNaN(n)&&n>-10&&n<60)   ?n:null; }
-    sanitizaHumidade(v) { const n=Number(v); return (!isNaN(n)&&n>=0&&n<=100)  ?n:null; }
-    sanitizaPressao(v)  { const n=Number(v); return (!isNaN(n)&&n>800&&n<1100) ?n:null; }
-    sanitizaRuido(v)    { const n=Number(v); return (!isNaN(n)&&n>0&&n<140)    ?n:null; }
-    sanitizaPoluente(v) { const n=Number(v); return (!isNaN(n)&&n>=0&&n<2000)  ?n:null; }
-
-    // ─── Timestamp ──────────────────────────────────────────────
-
-    markUpdated() {
-        this.lastUpdateTime = new Date();
-        const el = document.getElementById('last-update-ts');
-        if (!el) return;
-        const hhmm = this.lastUpdateTime.toLocaleTimeString('pt-PT', {hour:'2-digit',minute:'2-digit'});
-        el.textContent = `· atualizado às ${hhmm}`;
-        el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh');
-        setTimeout(() => el.classList.remove('fresh'), 3100);
-    }
-
-    // ─── Init ───────────────────────────────────────────────────
-
-    ngOnInit() {
-        console.clear();
-        console.log("🎸 INIT — Smart City of Rock");
-        this.updatePlaceholderCards();
-        this.initMap();
-        this.preloadCarrisRoutes();
-        this.preloadGridCoords();
-        this.preloadSensores();
-    }
-
-    initMap() {
-        setTimeout(() => {
-            const ml = (typeof maplibregl !== 'undefined' ? maplibregl : null) || window.maplibregl;
-            if (!ml) { console.warn('MapLibre não disponível — retry'); setTimeout(()=>this.initMap(), 800); return; }
-            console.log('✅ MapLibre v'+(ml.version||'?'));
-
-            this.map = new ml.Map({
-                container: 'map',
-                style: {"version":8,"glyphs":"https://fonts.openmaptiles.org/{fontstack}/{range}.pbf","sprite":"","sources":{"carto":{"type":"raster","tileSize":256,"attribution":"© CARTO © OSM","tiles":["https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png","https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png","https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"]}},"layers":[{"id":"bg","type":"raster","source":"carto"}]},
-                center: [-9.0945, 38.778],
-                zoom: 13, pitch: 52, bearing: -15,
-                antialias: true, maxPitch: 80, attributionControl: false,
-            });
-            this.map.addControl(new ml.NavigationControl({ visualizePitch:true }), 'top-right');
-
-            this.map.on('load', () => {
-                console.log('🗺️ MapLibre pronto');
-                this._mlReady = true;
-                this._initMLSources();
-                this.drawPoligonoRIR();
-                this.setupTooltipML();
-                this.loadWaze();
-                this.loadWazeAlerts();
-                this.loadCarris();
-                this.loadGopis();
-                this._initArcos();
-            });
-
-            this.map.on('move', () => {
-                this.updateZoomIndicator();
-                clearTimeout(this.updateTimeout);
-                this.updateTimeout = setTimeout(() => { this.updateAllCards(); }, 150);
-            });
-
-            this.setupTabs();
-            this.setupSliders();
-
-            this.refreshTimer = setInterval(() => {
-                console.log("🎸 Refresh auto (2 min)");
-                this.loadWaze(); this.loadWazeAlerts(); this.loadCarris(); this.loadGopis();
-                this.loadAfluencia(); this.loadDensidadeHistorico(); this.preloadSensores();
-                this._loadArcosData();
-            }, 120000);
-        }, 300);
-    }
-
-    drawPoligonoRIR() {
-        if (!this._mlReady) return;
-        const coords = this.poligonoCoords.map(c => [c[0], c[1]]);
-        this.map.addSource('poligono-rir', {type:'geojson', data:{type:'Feature',geometry:{type:'Polygon',coordinates:[coords]}}});
-        this.map.addLayer({id:'poligono-fill',type:'fill',source:'poligono-rir',paint:{'fill-color':'#E30613','fill-opacity':0.06}});
-        this.map.addLayer({id:'poligono-line',type:'line',source:'poligono-rir',paint:{'line-color':'#E30613','line-width':2,'line-dasharray':[4,3],'line-opacity':0.85}});
-    }
-
-    pontoNoPoligono(lon, lat) {
-        const poly = this.poligonoCoords; let inside = false;
-        for (let i=0, j=poly.length-1; i<poly.length; j=i++) {
-            const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
-            if (((yi>lat)!==(yj>lat)) && (lon<(xj-xi)*(lat-yi)/(yj-yi)+xi)) inside=!inside;
-        }
-        return inside;
-    }
-
-    _mlReady = false;
-
-    _initMLSources() {
-        const m = this.map;
-        const empty = () => ({type:'FeatureCollection',features:[]});
-
-        // ── Sources ──────────────────────────────────────────────────────
-        ['waze-jams','waze-alerts','carris','gopis','sensores','heat-src'].forEach(id => {
-            if (!m.getSource(id)) m.addSource(id, {type:'geojson', data:empty()});
-        });
-
-        // ── Layers — Waze jams ───────────────────────────────────────────
-        m.addLayer({id:'waze-jams-line', type:'line', source:'waze-jams',
-            paint:{'line-color':['case',['<=',['get','level'],2],'#99FF00',['==',['get','level'],3],'#FF9900','#FF3300'],
-                'line-width':['interpolate',['linear'],['get','level'],1,3,5,7]},
-            layout:{'line-cap':'round','visibility':'none'}});
-
-        // ── Waze alerts ──────────────────────────────────────────────────
-        m.addLayer({id:'waze-alerts-sym', type:'symbol', source:'waze-alerts',
-            layout:{'text-field':['case',['==',['get','type'],'ACCIDENT'],'🚗',
-                ['==',['get','type'],'CONSTRUCTION'],'🚧','⚠️'],
-                'text-size':18,'text-allow-overlap':true,'text-ignore-placement':true,
-                'visibility':'none'}});
-
-        // ── Carris ───────────────────────────────────────────────────────
-        m.addLayer({id:'carris-halo', type:'circle', source:'carris',
-            paint:{'circle-radius':14,
-                'circle-color':['case',['==',['get','direction'],'ASC'],'rgba(0,102,204,0.25)','rgba(0,153,80,0.25)']},
-            layout:{'visibility':'none'}});
-        m.addLayer({id:'carris-body', type:'circle', source:'carris',
-            paint:{'circle-radius':8,
-                'circle-color':['case',['==',['get','direction'],'ASC'],'#0066cc','#009950'],
-                'circle-stroke-width':2,'circle-stroke-color':'#fff'},
-            layout:{'visibility':'none'}});
-        m.addLayer({id:'carris-label', type:'symbol', source:'carris',
-            layout:{'text-field':['get','route_number'],'text-size':9,
-                'text-anchor':'center','text-offset':[0,-2],
-                'text-allow-overlap':true,'text-ignore-placement':true,'visibility':'none'},
-            paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':1.5}});
-
-        // ── GOPIs ────────────────────────────────────────────────────────
-        m.addLayer({id:'gopis-sym', type:'symbol', source:'gopis',
-            layout:{'text-field':['get','emoji'],'text-size':18,
-                'text-allow-overlap':true,'text-ignore-placement':true,'visibility':'none'},
-            paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':2}});
-
-        // ── Sensores ─────────────────────────────────────────────────────
-        m.addLayer({id:'sensores-halo', type:'circle', source:'sensores',
-            filter:['==',['get','selected'],true],
-            paint:{'circle-radius':18,'circle-color':'rgba(227,6,19,0.2)',
-                'circle-stroke-width':2,'circle-stroke-color':'#E30613'},
-            layout:{'visibility':'none'}});
-        m.addLayer({id:'sensores-body', type:'circle', source:'sensores',
-            paint:{'circle-radius':10,
-                'circle-color':['case',['==',['get','selected'],true],'#E30613','#0066cc'],
-                'circle-stroke-width':1.5,'circle-stroke-color':'#fff'},
-            layout:{'visibility':'none'}});
-        m.addLayer({id:'sensores-sym', type:'symbol', source:'sensores',
-            layout:{'text-field':['get','emoji'],'text-size':13,'text-anchor':'center',
-                'text-allow-overlap':true,'text-ignore-placement':true,'visibility':'none'},
-            paint:{'text-color':'#fff','text-halo-color':'#000','text-halo-width':2}});
-
-        // ── Heatmap Vodafone ─────────────────────────────────────────────
-        m.addLayer({id:'heat-layer', type:'heatmap', source:'heat-src',
-            paint:{
-                'heatmap-weight':['interpolate',['linear'],['get','weight'],0,0,1,1],
-                'heatmap-intensity':['interpolate',['linear'],['zoom'],10,1,16,5],
-                'heatmap-radius':['interpolate',['linear'],['zoom'],10,25,16,60],
-                'heatmap-color':['interpolate',['linear'],['heatmap-density'],
-                    0,'rgba(0,0,0,0)',
-                    0.1,'rgba(0,102,204,0)',
-                    0.3,'#0066cc',
-                    0.5,'#7fb3ed',
-                    0.7,'#fff200',
-                    0.85,'#ff6b00',
-                    1,'#E30613'],
-                'heatmap-opacity':0.85},
-            layout:{'visibility':'none'}});
-
-        // ── Eventos ──────────────────────────────────────────────────────
-        m.on('click',     e => this._mlClick(e));
-        m.on('mousemove', e => this._mlHover(e));
-
-        console.log('🗺️ ML sources/layers inicializados');
-    }
-
-    _mlSetSource(id, features) {
-        const src = this.map?.getSource(id);
-        if (src) src.setData({type:'FeatureCollection', features});
-    }
-
-    _mlLayerVisible(ids, visible) {
-        const v = visible ? 'visible' : 'none';
-        (Array.isArray(ids)?ids:[ids]).forEach(id => {
-            if (this.map?.getLayer(id)) this.map.setLayoutProperty(id,'visibility',v);
-        });
-    }
-
-    _mlClick(e) {
-        const layers = ['waze-jams-line','waze-alerts-sym','carris-body','gopis-sym','sensores-body'];
-        const feats = this.map.queryRenderedFeatures(e.point, {layers});
-        if (!feats.length) return;
-        const f = feats[0], p = f.properties;
-        let html = '';
-        if (f.layer.id === 'waze-jams-line')
-            html = `<div class="tt-title">🚦 ${p.name||'Via'}</div><div class="tt-row">Nível: <b>${p.level}/5</b></div>`;
-        else if (f.layer.id === 'waze-alerts-sym')
-            html = `<div class="tt-title">${this.getAlertTitle(p.type,p.subtype)}</div>${p.street?`<div class="tt-row">📍 ${p.street}</div>`:''}`;
-        else if (f.layer.id === 'carris-body')
-            html = `<div class="tt-title">🚌 ${p.route_number||'?'}</div><div class="tt-row">${p.direction==='ASC'?'▲ Sentido ida':'▼ Sentido volta'}</div>${p.plate?`<div class="tt-row">🪪 ${p.plate}</div>`:''}`;
-        else if (f.layer.id === 'gopis-sym')
-            html = `<div class="tt-title">${p.emoji||'📍'} ${p.typology1||''}</div>${p.address?`<div class="tt-row">📍 ${p.address}</div>`:''}${p.date?`<div class="tt-row">🕒 ${p.date}</div>`:''}`;
-        else if (f.layer.id === 'sensores-body')
-            html = `<div class="tt-title">${p.emoji} ${p.station||''}</div>`;
-        if (!html) return;
-        const tt = document.getElementById('alert-tooltip');
-        if (tt) { tt.innerHTML=html; tt.style.display='block'; tt.style.left=(e.point.x+14)+'px'; tt.style.top=(e.point.y+14)+'px'; }
-    }
-
-    _mlHover(e) {
-        const layers = ['waze-jams-line','waze-alerts-sym','carris-body','gopis-sym','sensores-body','arcos-halo-layer'];
-        const feats = this.map.queryRenderedFeatures(e.point, {layers});
-        this.map.getCanvas().style.cursor = feats.length ? 'pointer' : '';
-        const tt = document.getElementById('alert-tooltip');
-        if (!feats.length && tt) { tt.style.display='none'; return; }
-    }
-
-    setupTooltipML() {
-        // Tooltip via click (_mlClick) — já configurado em _initMLSources
-        const mapEl = document.getElementById('map');
-        if (mapEl) mapEl.addEventListener('mouseleave', () => {
-            const tt = document.getElementById('alert-tooltip');
-            if (tt) tt.style.display = 'none';
-        });
-    }
-
-    updateZoomIndicator() {
-        const el = document.getElementById('zoom-indicator'); if (!el||!this.map) return;
-        const zoom = this.map.getZoom();
-        const escala = zoom<13?'cidade':zoom<15?'recinto+envolvente':zoom<17?'recinto':'pormenor';
-        el.innerHTML = `<div class="zoom-main">🎸 Zoom <b>${zoom.toFixed(1)}</b></div><div class="zoom-sub">${escala}</div>`;
-    }
-
-    setupSliders() {
-        // gray/intensity eram filtros do OpenLayers — não aplicável ao MapLibre
-        // Os sliders do heatmap continuam a funcionar via rebuildAfluenciaLayer()
-        const heatIntensity = document.getElementById('heat-intensity');
-        const heatRadius = document.getElementById('heat-radius');
-        if (heatIntensity) heatIntensity.addEventListener('input', () => this.rebuildAfluenciaLayer());
-        if (heatRadius)    heatRadius.addEventListener('input', () => this.rebuildAfluenciaLayer());
-    }
-
-    setupTabs() {
-        const btnMob = document.getElementById('btn-mobilidade');
-        const btnDen = document.getElementById('btn-densidade');
-        const btnAmb = document.getElementById('btn-ambiente');
-        const btnGop = document.getElementById('btn-gopis');
-
-        btnMob.onclick = () => {
-            const v = !btnMob.classList.contains('active'); btnMob.classList.toggle('active', v);
-            const p = document.getElementById('carris-panel'); if (p) p.style.display = v?'block':'none';
-            this._mlLayerVisible(['waze-jams-line','waze-alerts-sym','carris-halo','carris-body','carris-label'], v);
-        };
-        btnDen.onclick = () => {
-            const v = !btnDen.classList.contains('active'); btnDen.classList.toggle('active', v);
-            const p = document.getElementById('densidade-panel'); if (p) p.style.display = v?'block':'none';
-            this._mlLayerVisible(['heat-layer'], v);
-            const c = document.getElementById('densidade-chart-overlay'); if (c) c.style.display = v?'block':'none';
-        };
-        btnAmb.onclick = () => {
-            const v = !btnAmb.classList.contains('active'); btnAmb.classList.toggle('active', v);
-            this._mlLayerVisible(['sensores-halo','sensores-body','sensores-sym'], v);
-            const s = document.getElementById('estacoes-selector');
-            if (s) { s.style.display = v ? 'block' : 'none'; if (v) this._positionSelector(s); }
-            const ba=document.getElementById('badge-ar'), br=document.getElementById('badge-ru');
-            if (!v) { if(ba)ba.style.display='none'; if(br)br.style.display='none'; } else { this._updateBadgesD1(); }
-        };
-        btnGop.onclick = () => {
-            const v = !btnGop.classList.contains('active'); btnGop.classList.toggle('active', v);
-            this._mlLayerVisible(['gopis-sym'], v);
-        };
-
-        const btnMeta = document.getElementById('btn-meta');
-        const metaModal = document.getElementById('meta-modal');
-        const metaClose = document.getElementById('meta-close');
-        btnMeta.onclick = () => { metaModal.style.display = 'flex'; };
-        metaClose.onclick = () => { metaModal.style.display = 'none'; };
-        metaModal.querySelector('.meta-backdrop').onclick = () => { metaModal.style.display = 'none'; };
-        document.addEventListener('keydown', (e) => { if (e.key==='Escape'&&metaModal.style.display==='flex') metaModal.style.display='none'; });
-    }
-
-    setupTooltip() {
-        // Substituída por setupTooltipML() chamada em map.on('load')
-    }
-
-    buildWazeJamTooltip(f) {
-        const street=f.get('name')||'Via desconhecida', level=f.get('level'), delay=f.get('delay');
-        let html=`<div class="tt-title">🚦 ${street}</div>`;
-        if (level!=null) html+=`<div class="tt-row">Nível: <b style="color:#fff">${level}/5</b></div>`;
-        if (delay!=null) html+=`<div class="tt-row">Atraso: <b style="color:#fff">${delay}s</b></div>`;
-        return html;
-    }
-
-    buildWazeAlertaTooltip(f) {
-        const type=f.get('type'), subtype=f.get('subtype'), street=f.get('street');
-        let html=`<div class="tt-title">${this.getAlertTitle(type,subtype)}</div>`;
-        if (street) html+=`<div class="tt-row">📍 ${street}</div>`;
-        return html;
-    }
-
-    buildCarrisTooltip(f) {
-        const routeNumber=f.get('route_number'), routeId=f.get('route_id'), direction=f.get('direction'), plate=f.get('plate');
-        const routeName=this.routeNames[routeId]||'';
-        const dirText=direction==='ASC'?'▲ Sentido ida':direction==='DESC'?'▼ Sentido volta':'';
-        let html=`<div class="tt-title">🚌 ${routeNumber||'?'}</div>`;
-        if (routeName) html+=`<div class="tt-row" style="font-weight:bold;color:white">${routeName}</div>`;
-        if (dirText) html+=`<div class="tt-row">${dirText}</div>`;
-        if (plate) html+=`<div class="tt-row">🪪 ${plate}</div>`;
-        return html;
-    }
-
-    buildSensorTooltip(f) {
-        const station=f.get('station'), sensortype=f.get('sensortype'), valores=f.get('valores')||{};
-        const tipoLabel=sensortype==='QA'?'💨 Qualidade do Ar':sensortype==='RU'?'🔊 Ruído':'🌤️ Meteorologia';
-        let html=`<div class="tt-title">${tipoLabel}</div>`;
-        if (station) html+=`<div class="tt-row">📍 ${station}</div>`;
-        Object.entries(valores).forEach(([p,v]) => {
-            if (v==null||isNaN(v)||v===0) return;  // zeros suprimidos
-            html+=`<div class="tt-row">${this.labelParam(p)}: <b style="color:#fff">${Number(v).toFixed(1)}${this.unidadeParam(p)}</b></div>`;
-        });
-        return html;
-    }
-
-    buildGopiTooltip(f) {
-        const tip1=f.get('typology1'), tip2=f.get('typology2'), address=f.get('address'), date=f.get('date');
-        const emoji=this.gopiTipologias[tip1]||'📍';
-        let html=`<div class="tt-title">${emoji} ${tip1||'Ocorrência'}</div>`;
-        if (tip2) html+=`<div class="tt-row">${tip2}</div>`;
-        if (address) html+=`<div class="tt-row">📍 ${address}</div>`;
-        if (date) html+=`<div class="tt-row">🕒 ${date}</div>`;
-        return html;
-    }
-
-    getAlertTitle(type, subtype) {
-        const subtypes = { HAZARD_ON_ROAD:"⚠️ Perigo na estrada", HAZARD_ON_ROAD_POT_HOLE:"🕳️ Buraco na estrada", HAZARD_ON_ROAD_CONSTRUCTION:"🚧 Obras na estrada", HAZARD_ON_ROAD_OBJECT:"⚠️ Objeto na estrada", HAZARD_ON_ROAD_TRAFFIC_LIGHT_FAULT:"🚦 Semáforo avariado", HAZARD_ON_ROAD_LANE_CLOSED:"⛔ Faixa cortada", HAZARD_ON_ROAD_CAR_STOPPED:"🚗 Carro parado na via", HAZARD_ON_SHOULDER:"⚠️ Perigo na berma", HAZARD_ON_SHOULDER_CAR_STOPPED:"🚙 Carro parado na berma", HAZARD_WEATHER:"🌧️ Condições meteorológicas", ROAD_CLOSED_EVENT:"🎪 Estrada cortada (evento)", ROAD_CLOSED_CONSTRUCTION:"🚧 Estrada cortada (obras)", ROAD_CLOSED_HAZARD:"⛔ Estrada cortada (perigo)", ACCIDENT_MAJOR:"🚨 Acidente grave", ACCIDENT_MINOR:"🚗 Acidente ligeiro" };
-        if (subtype && subtypes[subtype]) return subtypes[subtype];
-        const types = { ACCIDENT:"🚗 Acidente", ROAD_CLOSED:"⛔ Estrada cortada", CONSTRUCTION:"🚧 Obras", JAM:"🚦 Trânsito", HAZARD:"⚠️ Perigo" };
-        return types[type]||"⚠️ Alerta";
-    }
-
-    getColor(level) { return level<=2?"#99FF00":level===3?"#FF9900":"#FF3300"; }
-
-    labelParam(p) { return {pm10:'PM10',pm25:'PM2.5',no2:'NO₂',o3:'O₃',so2:'SO₂',laeq:'LAeq',temperature:'Temp',humidity:'Humidade',pressure:'Pressão'}[p]||p; }
-    unidadeParam(p) { return {pm10:' µg/m³',pm25:' µg/m³',no2:' µg/m³',o3:' µg/m³',so2:' µg/m³',laeq:' dBA',temperature:' °C',humidity:' %',pressure:' hPa'}[p]||''; }
-
-    parsePosition(pos) {
-        if (!pos) return null;
-        try {
-            if (typeof pos==='object'&&pos.coordinates) return {lon:Number(pos.coordinates[0]),lat:Number(pos.coordinates[1])};
-            if (typeof pos==='string') { const o=JSON.parse(pos); if (o.coordinates) return {lon:Number(o.coordinates[0]),lat:Number(o.coordinates[1])}; }
-        } catch(e) {}
-        return null;
-    }
-
-    // ─── WAZE TRÁFEGO ───────────────────────────────────────────
-
-    loadWaze() {
-        const query = { entities:[{idPattern:".*",type:"WAZE.jams"}], scopes:[{type:"FIWARE::StringQuery",value:"status==active"}], attributes:['level','delay','endNode','position'] };
-        CCOC.Entities.query(query, {limit:1000}, "fs_lisbon", "/cml_external")
-            .then((data) => {
-                const feats=[];
-                data.forEach((item) => {
-                    if (!item.position?.value?.geometries?.length) return;
-                    const geom=item.position.value.geometries[0];
-                    if (!this.extrairCoordsParaTeste(geom).some(c=>this.pontoNoPoligono(c[0],c[1]))) return;
-                    feats.push({type:'Feature',geometry:geom,
-                        properties:{level:item.level?.value??1,delay:item.delay?.value??0,name:item.endNode?.value||''}});
-                });
-                console.log(`🚗 Waze jams: ${feats.length}`);
-                this._wazeJamsFeats = feats;
-                this._mlSetSource('waze-jams', feats);
-                this.updateTrafegoCard(feats); this.markUpdated();
-            })
-            .catch(err => { console.warn("Waze tráfego falhou:", err); this.updateTrafegoCard([]); });
-    }
-
-    extrairCoordsParaTeste(geom) {
-        if (geom.type==='Point') return [geom.coordinates];
-        if (geom.type==='LineString') return geom.coordinates;
-        if (geom.type==='MultiLineString'||geom.type==='Polygon') return geom.coordinates.flat();
-        if (geom.type==='MultiPolygon') return geom.coordinates.flat(2);
-        return [];
-    }
-
-    updateTrafegoCard(features) {
-        const el=document.getElementById('trafego-card'); if (!el) return;
-        const getP = (f,k) => f.properties?.[k] ?? f.get?.(k);
-        if (!features.length) { el.innerHTML=`<b>🚗 Tráfego</b><div class="big-number">0</div><div class="big-number-sub">sem engarrafamentos</div>`; return; }
-        const nivelMedio=features.map(f=>Number(getP(f,'level'))||0).reduce((a,c)=>a+c,0)/features.length;
-        const graves=features.filter(f=>Number(getP(f,'level'))>=4).length;
-        const delayMedio=features.map(f=>Number(getP(f,'delay'))||0).reduce((a,c)=>a+c,0)/features.length;
-        el.innerHTML=`<b>🚗 Tráfego</b><div class="big-number">${features.length}</div><div class="big-number-sub">engarrafamentos · nível médio ${nivelMedio.toFixed(1)}/5</div>${graves>0?`<div style="font-size:10px;color:#ff6b7a;margin-top:4px">🔴 ${graves} graves (nível ≥4)</div>`:''}<div style="font-size:10px;color:#ffb3b8;margin-top:2px">Atraso médio: <b>${Math.round(delayMedio)}s</b></div>`;
-    }
-
-    // ─── WAZE ALERTAS ───────────────────────────────────────────
-
-    loadWazeAlerts() {
-        const query = { entities:[{idPattern:".*",type:"WAZE.alerts"}], scopes:[{type:"FIWARE::StringQuery",value:"status==active"}], attributes:['alertType','subType','position','street','reliability'] };
-        CCOC.Entities.query(query, {limit:1000}, "fs_lisbon", "/cml_external")
-            .then((data) => {
-                const feats=[];
-                data.forEach((item) => {
-                    if (!item.position?.value?.geometries?.length) return;
-                    if (item.alertType?.value==="ROAD_CLOSED"||item.alertType?.value==="JAM") return;
-                    const geom=item.position.value.geometries[0];
-                    if (!this.extrairCoordsParaTeste(geom).some(c=>this.pontoNoPoligono(c[0],c[1]))) return;
-                    feats.push({type:'Feature',geometry:geom,
-                        properties:{type:item.alertType?.value,subtype:item.subType?.value,street:item.street?.value||''}});
-                });
-                console.log(`⚠️ Waze alertas: ${feats.length}`);
-                this._mlSetSource('waze-alerts', feats);
-                this.updateAlertasCard(feats);
-            })
-            .catch(err => { console.warn("Waze alertas falhou:", err); this.updateAlertasCard([]); });
-    }
-
-    updateAlertasCard(features) {
-        const el=document.getElementById('alertas-card'); if (!el) return;
-        const getP = (f,k) => f.properties?.[k] ?? f.get?.(k);
-        if (!features.length) { el.innerHTML=`<b>⚠️ Alertas Waze</b><div class="big-number">0</div><div class="big-number-sub">sem alertas</div>`; return; }
-        const porTipo={};
-        features.forEach(f=>{const t=getP(f,'type')||'Outro'; porTipo[t]=(porTipo[t]||0)+1;});
-        const traduz={ACCIDENT:"🚗 Acidentes",CONSTRUCTION:"🚧 Obras",HAZARD:"⚠️ Perigos"};
-        const top3=Object.entries(porTipo).filter(([t])=>t!=='JAM').sort((a,b)=>b[1]-a[1]).slice(0,3);
-        let bd='<div class="gopi-breakdown">'; top3.forEach(([t,n])=>{bd+=`${traduz[t]||t}: <b>${n}</b><br>`;}); bd+='</div>';
-        el.innerHTML=`<b>⚠️ Alertas Waze</b><div class="big-number">${features.length}</div><div class="big-number-sub">no recinto e envolvente</div>${bd}`;
-    }
-
-    // ─── CARRIS ─────────────────────────────────────────────────
-
-    preloadCarrisRoutes() {
-        CCOC.Functions.ac_executa_crate_sql(`SELECT route_id, name, route_number FROM raw_coi_tematica_carris_routes WHERE validity_ts IS NULL`,'select',5000)
-            .then((data) => { data.forEach(r=>{this.routeNames[r.route_id]=r.name;}); console.log(`🚌 Routes: ${Object.keys(this.routeNames).length}`); })
-            .catch(err=>console.warn("Carris routes:", err));
-    }
-
-    loadCarris() {
-        const desdeMillis=Date.now()-(5*60*1000);
-        const linhasList=this.linhasCarrisRIR.map(l=>`'${l}'`).join(',');
-        const _sql=`SELECT vehicle_id,vehicle_license_plate,route_id,route_number,direction,latitude,longitude,last_updated FROM raw_coi_tematica_carris WHERE validity_ts IS NULL AND last_updated>=${desdeMillis} AND latitude IS NOT NULL AND longitude IS NOT NULL AND route_number IN (${linhasList})`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',2000)
-            .then((data) => {
-                if (!data) data=[];
-                const feats=[]; let dentroPoligono=0; const linhasDentro=new Set();
-                const seen=new Set();
-                data.forEach(item => {
-                    if (seen.has(item.vehicle_id)) return; seen.add(item.vehicle_id);
-                    const lon=Number(item.longitude), lat=Number(item.latitude);
-                    if (isNaN(lon)||isNaN(lat)) return;
-                    const inside=this.pontoNoPoligono(lon,lat);
-                    const dir=String(item.direction||'').toUpperCase();
-                    const dirN=(dir==='DESC'||dir==='DESCENDING')?'DESC':'ASC';
-                    feats.push({type:'Feature',geometry:{type:'Point',coordinates:[lon,lat]},
-                        properties:{route_id:item.route_id,route_number:String(item.route_number||'?'),
-                            direction:dirN,plate:item.vehicle_license_plate||'',inside}});
-                    if (inside){dentroPoligono++;linhasDentro.add(String(item.route_number));}
-                });
-                this._mlSetSource('carris', feats);
-                this.updateCarrisCard(dentroPoligono,linhasDentro);
-            })
-            .catch(err=>{console.warn("Carris falhou:",err);this.updateCarrisCard(0,new Set());});
-    }
-
-    updateCarrisCard(dentroPoligono, linhasDentro) {
-        const el=document.getElementById('carris-card'); if (!el) return;
-        const linhasArray=[...linhasDentro].sort();
-        const linhasHTML=linhasArray.length?`<div style="font-size:10px;color:#a9d6ff;margin-top:6px">Linhas: <b>${linhasArray.join(', ')}</b></div>`:'';
-        el.innerHTML=`<b>🚌 Carris</b><div class="big-number">${dentroPoligono}</div><div class="big-number-sub">autocarros no recinto · ${linhasDentro.size}/${this.linhasCarrisRIR.length} linhas ativas</div>${linhasHTML}`;
-        document.querySelectorAll('.linha-pill').forEach(p=>{p.classList.toggle('active',linhasDentro.has(p.textContent));});
-        const s=document.getElementById('carris-summary'); if (s) s.textContent=`${dentroPoligono} no recinto`;
-    }
-
-    // ─── DENSIDADE ──────────────────────────────────────────────
-
-    preloadGridCoords() {
-        CCOC.Functions.ac_executa_crate_sql(`SELECT objectid,latitude,longitude FROM raw_coi_tematica_grelha_lx_atributos WHERE validity_ts IS NULL AND latitude IS NOT NULL AND longitude IS NOT NULL`,'select',5000)
-            .then((data) => {
-                data.forEach(r=>{this.gridCoords.set(Number(r.objectid),[Number(r.longitude),Number(r.latitude)]);});
-                console.log(`📱 Grelhas: ${this.gridCoords.size}`);
-                this.loadAfluencia(); this.loadDensidadeHistorico();
-            })
-            .catch(err=>{console.error("❌ Grelhas:",err);this.updateDensidadeCard(0,0);});
-    }
-
-    loadAfluencia() {
-        if (!this.gridCoords.size) return;
-        const cellsList=this.quadriculasVodafone.join(',');
-        const _sql=`SELECT grid_id,COALESCE("C3",0)::DOUBLE AS c3,COALESCE("C4",0)::DOUBLE AS c4,date FROM raw_coi_tematica_lx_indicadores_a WHERE grid_id IN (${cellsList}) AND date IN (SELECT MAX(date) FROM raw_coi_tematica_lx_indicadores_a WHERE grid_id IN (${cellsList}))`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',5000)
-            .then((data) => {
-                if (!data||!data.length){this.updateDensidadeCard(0,0);return;}
-                this.devicesData=data; this.devicesLastUpdate=data[0].date;
-                this.devicesMaxC3=Math.max(1,...data.map(r=>Number(r.c3)||0));
-                this.devicesMaxC4=Math.max(1,...data.map(r=>Number(r.c4)||0));
-                let totalC3=0,totalC4=0;
-                data.forEach(r=>{totalC3+=Number(r.c3)||0;totalC4+=Number(r.c4)||0;});
-                this.rebuildAfluenciaLayer(); this.updateDensidadeCard(totalC3,totalC4); this.markUpdated();
-            })
-            .catch(err=>{console.error("❌ Densidade:",err);this.updateDensidadeCard(0,0);});
-    }
-
-    loadDensidadeHistorico() {
-        if (!this.gridCoords.size) return;
-        const cellsList=this.quadriculasVodafone.join(',');
-        const _sql=`SELECT bucket,SUM(c3) AS media_c3,SUM(c4) AS media_c4,COUNT(*) AS n_celulas FROM (SELECT grid_id,floor(date/1200000)*1200000 AS bucket,COALESCE("C3",0)::DOUBLE AS c3,COALESCE("C4",0)::DOUBLE AS c4,date,MAX(date) OVER (PARTITION BY grid_id,floor(date/1200000)) AS max_date_in_bucket FROM raw_coi_tematica_lx_indicadores_a WHERE grid_id IN (${cellsList}) AND date>=(SELECT MAX(date)-18000000 FROM raw_coi_tematica_lx_indicadores_a WHERE grid_id IN (${cellsList}))) t WHERE date=max_date_in_bucket GROUP BY bucket ORDER BY bucket ASC`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',500)
-            .then((data) => {
-                if (!data||!data.length){this.densidadeHistorico=[];}
-                else{console.log(`📊 Histórico: ${data.length} buckets`);this.densidadeHistorico=data.map(r=>({bucket:Number(r.bucket),media_c3:Number(r.media_c3)||0,media_c4:Number(r.media_c4)||0,n_celulas:Number(r.n_celulas)||0}));}
-                this.renderDensidadeChart();
-            })
-            .catch(err=>{console.warn("📊 Histórico falhou:",err);this.densidadeHistorico=[];this.renderDensidadeChart();});
-    }
-
-    renderDensidadeChart() {
-        const canvas=document.getElementById('densidade-chart'), noData=document.getElementById('chart-no-data'), lastUpd=document.getElementById('chart-last-update');
-        if (!canvas) return;
-        const dados=this.densidadeHistorico;
-        if (!dados.length){canvas.style.display='none';if(noData)noData.style.display='block';this._chartMeta=null;return;}
-        canvas.style.display='block'; if(noData)noData.style.display='none';
-        const ultimoBucket=dados[dados.length-1].bucket;
-        if (lastUpd) lastUpd.textContent='último: '+moment(ultimoBucket).format('HH:mm');
-        const ctx=canvas.getContext('2d'), W=canvas.offsetWidth||332, H=140;
-        canvas.width=W; canvas.height=H; ctx.clearRect(0,0,W,H);
-        const mL=38,mR=8,mT=10,mB=28,pW=W-mL-mR,pH=H-mT-mB,n=dados.length;
-        const maxVal=Math.max(...dados.map(d=>d.media_c3),1), yMax=Math.ceil(maxVal/50)*50||50;
-        const barGap=2, barW=Math.max(4,(pW/n)-barGap);
-        this._chartMeta={marginLeft:mL,plotW:pW,plotH:pH,marginTop:mT,marginBottom:mB,barW,barGap,n,dados,W,H,yMax};
-        ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
-        for(let i=0;i<=4;i++){const y=mT+pH-(i/4)*pH;ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(mL+pW,y);ctx.stroke();ctx.fillStyle='rgba(255,179,184,0.7)';ctx.font='8px Segoe UI,Arial';ctx.textAlign='right';const val=Math.round((i/4)*yMax);ctx.fillText(val>999?(val/1000).toFixed(1)+'k':val,mL-3,y+3);}
-        dados.forEach((d,i)=>{
-            const x=mL+(i/n)*pW+barGap/2, barH=(d.media_c3/yMax)*pH, y=mT+pH-barH, isLast=i===n-1;
-            const grad=ctx.createLinearGradient(0,y,0,mT+pH);
-            grad.addColorStop(0,isLast?'rgba(255,60,80,0.95)':'rgba(227,6,19,0.75)');
-            grad.addColorStop(1,isLast?'rgba(180,20,35,0.7)':'rgba(130,0,10,0.4)');
-            ctx.fillStyle=grad; ctx.beginPath(); ctx.roundRect(x,y,barW,barH,[2,2,0,0]); ctx.fill();
-            if(isLast){ctx.fillStyle='rgba(255,255,255,0.25)';ctx.beginPath();ctx.roundRect(x,y,barW,Math.min(4,barH),[2,2,0,0]);ctx.fill();}
-        });
-        ctx.fillStyle='rgba(255,179,184,0.8)'; ctx.font='8px Segoe UI,Arial'; ctx.textAlign='center';
-        dados.forEach((d,i)=>{const x=mL+(i/n)*pW+barW/2+barGap/2,m=moment(d.bucket);if(m.minutes()===0||i===n-1){ctx.fillText(m.format('HH:mm'),x,H-mB+12);ctx.strokeStyle='rgba(255,179,184,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,mT+pH+2);ctx.lineTo(x,mT+pH+5);ctx.stroke();}});
-        ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(mL,mT); ctx.lineTo(mL,mT+pH); ctx.stroke();
-        this._setupChartTooltip();
-    }
-
-    _setupChartTooltip() {
-        const canvas=document.getElementById('densidade-chart'), overlay=document.getElementById('densidade-chart-overlay');
-        if (!canvas||canvas._tooltipBound) return; canvas._tooltipBound=true;
-        const tt=document.getElementById('chart-tooltip-el'); if (!tt) return;
-        const fmt=(v)=>Math.round(v).toLocaleString('pt-PT');
-        canvas.addEventListener('mousemove', (e) => {
-            if (!this._chartMeta){tt.style.display='none';return;}
-            const {marginLeft,plotW,barW,barGap,n,dados}=this._chartMeta;
-            const rect=canvas.getBoundingClientRect(), mouseX=e.clientX-rect.left;
-            let found=null;
-            dados.forEach((d,i)=>{const xL=marginLeft+(i/n)*plotW+barGap/2;if(mouseX>=xL&&mouseX<=xL+barW)found={d,i};});
-            if (!found){tt.style.display='none';return;}
-            const {d,i}=found, prev=i>0?dados[i-1]:null;
-            const horaInicio=moment(d.bucket).format('HH:mm'), horaFim=moment(d.bucket+1200000).format('HH:mm');
-            let varHTML='';
-            if (prev){const diff=d.media_c3-prev.media_c3,diffPct=prev.media_c3>0?((diff/prev.media_c3)*100).toFixed(1):'—';
-                if(Math.abs(diff)<1)varHTML=`<div class="ctt-row ctt-flat">▶ estável</div>`;
-                else if(diff>0)varHTML=`<div class="ctt-row ctt-up">▲ +${fmt(diff)} disp. (+${diffPct}%)</div>`;
-                else varHTML=`<div class="ctt-row ctt-down">▼ ${fmt(diff)} disp. (${diffPct}%)</div>`;}
-            const pctRoaming=d.media_c3>0?((d.media_c4/d.media_c3)*100).toFixed(1):'—';
-            tt.innerHTML=`<div class="ctt-hora">📱 ${horaInicio} — ${horaFim}</div><div class="ctt-row">Total recinto (C3): <b>${fmt(d.media_c3)}</b></div><div class="ctt-row">Roaming (C4): <b>${fmt(d.media_c4)}</b> · <b>${pctRoaming}%</b></div>${varHTML}`;
-            const overlayRect=overlay.getBoundingClientRect(), canvasRect=canvas.getBoundingClientRect();
-            let left=(e.clientX-overlayRect.left)+12, top=(canvasRect.top-overlayRect.top)+e.offsetY-10;
-            if(left+180>overlay.offsetWidth-4)left=(e.clientX-overlayRect.left)-180-12;
-            if(top<0)top=4;
-            tt.style.left=left+'px'; tt.style.top=top+'px'; tt.style.display='block';
-        });
-        canvas.addEventListener('mouseleave', ()=>{tt.style.display='none';});
-    }
-
-    rebuildAfluenciaLayer() {
-        if (!this._mlReady) return;
-        const maxValor=this.devicesMode==='c4'?this.devicesMaxC4:this.devicesMaxC3;
-        const radius=Number((document.getElementById('heat-radius')||{}).value||35);
-        const feats=(this.devicesData||[]).map(r=>{
-            const coords=this.gridCoords.get(Number(r.grid_id)); if(!coords)return null;
-            const v=Number(r[this.devicesMode])||0;
-            return{type:'Feature',geometry:{type:'Point',coordinates:coords},
-                properties:{weight:Math.min(1,v/maxValor)}};
-        }).filter(Boolean);
-        this._mlSetSource('heat-src', feats);
-        if (this.map.getLayer('heat-layer'))
-            this.map.setPaintProperty('heat-layer','heatmap-radius',radius);
-        const btnDen=document.getElementById('btn-densidade');
-        const v=btnDen&&btnDen.classList.contains('active')?'visible':'none';
-        if (this.map.getLayer('heat-layer')) this.map.setLayoutProperty('heat-layer','visibility',v);
-    }
-
-    updateDensidadeCard(totalC3, totalC4) {
-        const el=document.getElementById('densidade-card'); if (!el) return;
-        if (!totalC3&&!totalC4){el.innerHTML=`<b>📱 Densidade</b><div class="big-number">—</div><div class="big-number-sub">sem leituras</div>`;return;}
-        const pctRoaming=totalC3>0?Math.round((totalC4/totalC3)*100):0;
-        const dataLeitura=this.devicesLastUpdate?moment(this.devicesLastUpdate).format('HH:mm'):'';
-        el.innerHTML=`<b>📱 Densidade</b><div class="big-number">${Math.round(totalC3).toLocaleString('pt-PT')}</div><div class="big-number-sub">dispositivos instantâneos</div><div style="font-size:10px;color:#ffb3b8;margin-top:4px">🌐 ${pctRoaming}% roaming · ${dataLeitura}</div>`;
-        const s=document.getElementById('densidade-summary'); if(s) s.textContent=`${Math.round(totalC3).toLocaleString('pt-PT')} dispositivos`;
-    }
-
-    // ─── SENSORES AMBIENTAIS ─────────────────────────────────────
-
-    preloadSensores() {
-        const _sql=`SELECT entity_id,station,sensortype,status,lastreading,location,laeq,pm10,pm25,no2,o3,so2,temperature,humidity,pressure FROM raw_coi_tematica_environmentalsensor WHERE validity_ts IS NULL AND sensortype IN ('QA','RU','ME')`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',5000)
-            .then((data) => {
-                if (!data) data=[];
-                this.sensoresAllData=data.map(r=>{
-                    const coords=this.parsePosition(r.location);
-                    return {...r,_lon:coords?coords.lon:null,_lat:coords?coords.lat:null,
-                        temperature:this.sanitizaTemp(r.temperature),humidity:this.sanitizaHumidade(r.humidity),pressure:this.sanitizaPressao(r.pressure),
-                        laeq:this.sanitizaRuido(r.laeq),pm10:this.sanitizaPoluente(r.pm10),pm25:this.sanitizaPoluente(r.pm25),
-                        no2:this.sanitizaPoluente(r.no2),o3:this.sanitizaPoluente(r.o3),so2:this.sanitizaPoluente(r.so2)};
-                }).filter(r=>r._lon!=null&&this.pontoNoPoligono(r._lon,r._lat));
-                console.log(`🌡️ Sensores no polígono: ${this.sensoresAllData.length}`);
-                // Definir defaults na primeira carga
-                if (!this.estacaoQASelec) {
-                    const qaList=this.sensoresAllData.filter(r=>r.sensortype==='QA');
-                    const chen=qaList.find(r=>r.station&&r.station.toLowerCase().includes('chen he'));
-                    this.estacaoQASelec=chen?chen.entity_id:(qaList[0]?.entity_id||null);
-                }
-                if (!this.estacaoRUSelec) {
-                    const ruList=this.sensoresAllData.filter(r=>r.sensortype==='RU');
-                    const mBotas=ruList.find(r=>r.station&&r.station.toLowerCase().includes('mário botas'));
-                    this.estacaoRUSelec=mBotas?mBotas.entity_id:(ruList[0]?.entity_id||null);
-                }
-                this.refreshSensoresLayer();
-                this._renderEstacoesSelector();
-                // Redraw para aplicar highlight nos defaults
-                if (this.sensoresLayer) this.sensoresLayer.changed();
-                this.preloadSensoresD1();
-            })
-            .catch(err=>{console.warn("Sensores:",err);this.sensoresAllData=[];this.updateAmbienteCards();});
-    }
-
-    preloadSensoresD1() {
-        const d1Center=Date.now()-86400000, d1From=d1Center-1800000, d1To=d1Center+1800000;
-        const entityIds=this.sensoresAllData.filter(r=>r.sensortype==='QA'||r.sensortype==='RU').map(r=>`'${r.entity_id}'`).join(',');
-        if (!entityIds){this.sensoresD1={};this.updateAmbienteCards();return;}
-        const _sql=`SELECT entity_id,laeq,pm10,pm25,no2,o3,so2,validity_ts FROM raw_coi_tematica_environmentalsensor WHERE entity_id IN (${entityIds}) AND sensortype IN ('QA','RU') AND validity_ts>=${d1From} AND validity_ts<=${d1To} ORDER BY entity_id,validity_ts DESC`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',2000)
-            .then((data) => {
-                if (!data) data=[];
-                this.sensoresD1={};
-                data.forEach(r=>{
-                    if (!this.sensoresD1[r.entity_id]) this.sensoresD1[r.entity_id]={
-                        laeq:this.sanitizaRuido(r.laeq),pm10:this.sanitizaPoluente(r.pm10),pm25:this.sanitizaPoluente(r.pm25),
-                        no2:this.sanitizaPoluente(r.no2),o3:this.sanitizaPoluente(r.o3),so2:this.sanitizaPoluente(r.so2)
-                    };
-                });
-                console.log(`📅 D-1: ${Object.keys(this.sensoresD1).length} estações`);
-                this.updateAmbienteCards();
-            })
-            .catch(err=>{console.warn("D-1:",err);this.sensoresD1={};this.updateAmbienteCards();});
-    }
-
-    _deltaHTML(atual, anterior, unidade) {
-        if (atual==null||anterior==null) return `<span class="pl-delta flat">s/ ref. D-1</span>`;
-        const diff=atual-anterior;
-        if (Math.abs(diff)<0.5) return `<span class="pl-delta flat">▶ igual D-1</span>`;
-        const sinal=diff>0?'+':'', cls=diff>0?'up':'down';
-        return `<span class="pl-delta ${cls}">${sinal}${diff.toFixed(1)}${unidade} D-1</span>`;
-    }
-
-    _renderEstacoesSelector() {
-        const selQA=document.getElementById('select-qa'), selRU=document.getElementById('select-ru');
-        if (!selQA||!selRU) return;
-        const makeOptions=(lista,selecId)=>lista.map((r,i)=>{
-            const num=String(i+1).padStart(2,'0');
-            return `<option value="${r.entity_id}"${r.entity_id===selecId?' selected':''}>${num} · ${r.station.trim()}</option>`;
-        }).join('');
-        selQA.innerHTML=makeOptions(this.sensoresAllData.filter(r=>r.sensortype==='QA'),this.estacaoQASelec);
-        selRU.innerHTML=makeOptions(this.sensoresAllData.filter(r=>r.sensortype==='RU'),this.estacaoRUSelec);
-        window._scor=this;
-    }
-
-    selectEstacao(tipo, entityId) {
-        if (tipo === 'QA') this.estacaoQASelec = entityId;
-        if (tipo === 'RU') this.estacaoRUSelec = entityId;
-        this._renderEstacoesSelector();
-        // Forçar redraw do layer para aplicar o highlight
-        if (this.sensoresLayer) this.sensoresLayer.changed();
-        this.updateAmbienteCards();
-    }
-
-    refreshSensoresLayer() {
-        if (!this.map || !this._mlReady) return;
-        const feats = this.sensoresAllData.map(r => {
-            const stype = r.sensortype;
-            const emoji = stype==='QA'?'💨':stype==='RU'?'🔊':'🌤️';
-            const selected = (stype==='QA'&&r.entity_id===this.estacaoQASelec)||(stype==='RU'&&r.entity_id===this.estacaoRUSelec);
-            return {type:'Feature',geometry:{type:'Point',coordinates:[r._lon,r._lat]},
-                properties:{entity_id:r.entity_id,station:r.station,sensortype:stype,
-                    emoji,selected,laeq:r.laeq,pm10:r.pm10,pm25:r.pm25,no2:r.no2,o3:r.o3,temperature:r.temperature}};
-        });
-        this._mlSetSource('sensores', feats);
-        const btnAmb = document.getElementById('btn-ambiente');
-        const v = btnAmb && btnAmb.classList.contains('active') ? 'visible' : 'none';
-        ['sensores-halo','sensores-body','sensores-sym'].forEach(id => {
-            if (this.map.getLayer(id)) this.map.setLayoutProperty(id,'visibility',v);
-        });
-    }
-
-    // ─── Posicionamento fixo do selector ────────────────────────
-    // Calcula posição em relação à janela para não se mover com scroll
-
-    _positionSelector(el) {
-        // Posicionar pelo canto inferior direito do mapa
-        const mapEl = document.getElementById('map') || document.querySelector('.map-area');
-        const ref   = mapEl ? mapEl.getBoundingClientRect() : document.body.getBoundingClientRect();
-        el.style.position = 'fixed';
-        el.style.top      = 'auto';
-        el.style.bottom   = Math.max(10, window.innerHeight - ref.bottom + 20) + 'px';
-        el.style.right    = Math.max(10, window.innerWidth  - ref.right  + 12) + 'px';
-        el.style.zIndex   = '99999';
-    }
-
-    // ─── Badges D-1 no mapa ──────────────────────────────────────
-
-    _updateBadgesD1() {
-        const badgeAr = document.getElementById('badge-ar');
-        const badgeRu = document.getElementById('badge-ru');
-        const btnAmb  = document.getElementById('btn-ambiente');
-        const visible = btnAmb && btnAmb.classList.contains('active');
-
-        // ── Ar ────────────────────────────────────────────────────
-        if (badgeAr) {
-            const qaDados = this.sensoresAllData.filter(r => r.sensortype === 'QA');
-            const r  = qaDados.find(r => r.entity_id === this.estacaoQASelec) || qaDados[0];
-            const d1 = r ? (this.sensoresD1 || {})[r.entity_id] || {} : {};
-
-            const poluentes = [
-                { key: 'pm10', label: 'PM10',  un: ' µg/m³' },
-                { key: 'pm25', label: 'PM2.5', un: ' µg/m³' },
-                { key: 'no2',  label: 'NO₂',   un: ' µg/m³' },
-                { key: 'o3',   label: 'O₃',    un: ' µg/m³' },
-                { key: 'so2',  label: 'SO₂',   un: ' µg/m³' }
-            ];
-
-            // Recolher todas as variações significativas
-            const variacoes = [];
-            poluentes.forEach(p => {
-                const atual = r?.[p.key], anterior = d1[p.key];
-                if (atual == null || atual === 0 || anterior == null) return;
-                const diff = atual - anterior;
-                if (Math.abs(diff) < 0.5) return;
-                const sinal = diff < 0 ? '↓' : '↑';
-                const cls   = diff < 0 ? 'melhor' : 'pior';
-                variacoes.push({ label: p.label, diff, sinal, un: p.un, cls });
-            });
-
-            if (visible && r && variacoes.length > 0) {
-                // Tendência global: maioria melhor ou pior?
-                const nMelhor = variacoes.filter(v => v.diff < 0).length;
-                const nPior   = variacoes.filter(v => v.diff > 0).length;
-                const tendencia = nMelhor > nPior ? 'melhor' : nPior > nMelhor ? 'pior' : 'misto';
-                const textoTend = tendencia === 'melhor' ? 'melhor que ontem' : tendencia === 'pior' ? 'pior que ontem' : 'misto face a ontem';
-
-                let linhasVar = variacoes.map(v =>
-                    `<span class="${v.cls}" style="font-size:10px">${v.label} ${v.sinal} ${Math.abs(v.diff).toFixed(1)}${v.un}</span>`
-                ).join(' &nbsp;·&nbsp; ');
-
-                badgeAr.innerHTML = `
-                    <div class="badge-label">💨 Qualidade do Ar</div>
-                    <div class="badge-val ${tendencia === 'misto' ? 'igual' : tendencia}">${textoTend}</div>
-                    <div style="margin-top:3px;line-height:1.6">${linhasVar}</div>`;
-                badgeAr.style.display = 'block';
-            } else if (visible && r && variacoes.length === 0 && r.pm10 != null) {
-                badgeAr.innerHTML = `<div class="badge-label">💨 Qualidade do Ar</div><div class="badge-val igual">igual a ontem</div>`;
-                badgeAr.style.display = 'block';
-            } else {
-                badgeAr.style.display = 'none';
-            }
-        }
-
-        // ── Ruído ─────────────────────────────────────────────────
-        if (badgeRu) {
-            const ruDados = this.sensoresAllData.filter(r => r.sensortype === 'RU');
-            const r = ruDados.find(r => r.entity_id === this.estacaoRUSelec) || ruDados[0];
-            const d1 = r ? (this.sensoresD1 || {})[r.entity_id] || {} : {};
-            const atual = r?.laeq, anterior = d1.laeq;
-
-            if (visible && r && atual != null && anterior != null) {
-                const diff = atual - anterior;
-                const absDiff = Math.abs(diff).toFixed(1);
-                let cls, texto;
-                if (Math.abs(diff) < 0.5) {
-                    cls = 'igual'; texto = `igual a ontem`;
-                } else if (diff < 0) {
-                    cls = 'melhor'; texto = `melhor que ontem (LAeq ↓ ${absDiff} dBA)`;
-                } else {
-                    cls = 'pior'; texto = `pior que ontem (LAeq ↑ ${absDiff} dBA)`;
-                }
-                badgeRu.innerHTML = `<div class="badge-label">🔊 Ruído</div><div class="badge-val ${cls}">${texto}</div>`;
-                badgeRu.style.display = 'block';
-            } else {
-                badgeRu.style.display = 'none';
-            }
-        }
-    }
-
-    // ─── Cards ambientais ────────────────────────────────────────
-
-    updateAmbienteCards() {
-
-        // ── AR — estação selecionada, apresentação limpa ─────────
-        const qaDados = this.sensoresAllData.filter(r => r.sensortype === 'QA');
-        const arEl    = document.getElementById('ar-card');
-        if (arEl) {
-            if (!qaDados.length) {
-                arEl.innerHTML = `<b>💨 Qualidade do Ar</b><div class="big-number">—</div><div class="big-number-sub">sem dados</div>`;
-            } else {
-                const r = qaDados.find(r => r.entity_id === this.estacaoQASelec) || qaDados[0];
-                const c = this.classificaAr(r.pm10, r.pm25, r.no2, r.o3);
-                const poluentes = [
-                    { key: 'pm10', label: 'PM10',  un: ' µg/m³' },
-                    { key: 'pm25', label: 'PM2.5', un: ' µg/m³' },
-                    { key: 'no2',  label: 'NO₂',   un: ' µg/m³' },
-                    { key: 'o3',   label: 'O₃',    un: ' µg/m³' },
-                    { key: 'so2',  label: 'SO₂',   un: ' µg/m³' }
-                ];
-                let linhas = '';
-                poluentes.forEach(p => {
-                    const val = r[p.key];
-                    if (val == null || val === 0) return;
-                    linhas += `<div class="param-linha"><span class="pl-label">${p.label}</span><span class="pl-val">${val.toFixed(0)}${p.un}</span></div>`;
-                });
-                arEl.innerHTML = `<b>💨 Qualidade do Ar</b>
-                    <div class="card-estacao-nome" title="${r.station}">${r.station}</div>
-                    <div class="card-classif-label" style="color:${c.cor}">${c.label}</div>
-                    ${linhas}`;
-            }
-        }
-
-        // ── RUÍDO — estação selecionada, apresentação limpa ──────
-        const ruDados = this.sensoresAllData.filter(r => r.sensortype === 'RU');
-        const ruEl    = document.getElementById('ruido-card');
-        if (ruEl) {
-            if (!ruDados.length) {
-                ruEl.innerHTML = `<b>🔊 Ruído</b><div class="big-number">—</div><div class="big-number-sub">sem dados</div>`;
-            } else {
-                const r = ruDados.find(r => r.entity_id === this.estacaoRUSelec) || ruDados[0];
-                const c = this.classificaRuido(r.laeq);
-                ruEl.innerHTML = `<b>🔊 Ruído</b>
-                    <div class="card-estacao-nome" title="${r.station}">${r.station}</div>
-                    <div class="big-number" style="color:${c.cor}">${c.emoji} ${r.laeq != null ? r.laeq.toFixed(1) : '—'}<span class="unit-small" style="color:${c.cor}"> dBA</span></div>
-                    <div class="card-classif-label" style="color:${c.cor}">${c.label}</div>`;
-            }
-        }
-
-        // ── TEMPERATURA — média, sem alterações ──────────────────
-        const meDados = this.sensoresAllData.filter(r => r.sensortype === 'ME' && r.temperature != null);
-        const tempEl  = document.getElementById('temp-card');
-        if (tempEl) {
-            if (!meDados.length) {
-                tempEl.innerHTML = `<b>🌡️ Temperatura</b><div class="big-number">—</div><div class="big-number-sub">sem dados</div>`;
-            } else {
-                const vals = meDados.map(r => r.temperature);
-                const media = vals.reduce((a,c) => a+c, 0) / vals.length;
-                const min = Math.min(...vals), max = Math.max(...vals);
-                const humVals = meDados.map(r => r.humidity).filter(v => v != null);
-                const humMedia = humVals.length ? humVals.reduce((a,c) => a+c, 0) / humVals.length : null;
-                const c = this.classificaTemp(media);
-                tempEl.innerHTML = `<b>🌡️ Temperatura</b>
-                    <div class="big-number" style="color:${c.cor}">${c.emoji} ${media.toFixed(1)}<span class="unit-small" style="color:${c.cor}">°C</span></div>
-                    <div class="big-number-sub" style="color:${c.cor};font-weight:bold;text-transform:uppercase;letter-spacing:0.5px">${c.label}</div>
-                    <div style="display:flex;gap:8px;margin-top:4px;font-size:10px">
-                        <span style="color:#7fb3ed">⬇ ${min.toFixed(1)}°</span>
-                        <span style="color:#ff8a8a">⬆ ${max.toFixed(1)}°</span>
-                        ${humMedia != null ? `<span style="color:#a9d6ff">💧 ${humMedia.toFixed(0)}%</span>` : ''}
-                    </div>`;
-            }
-        }
-
-        // Atualizar badges no mapa depois de ter os dados
-        this._updateBadgesD1();
-    }
-
-    // ─── GOPIs ──────────────────────────────────────────────────
-
-    loadGopis() {
-        const desdeMillis=moment().startOf('day').valueOf();
-        const tipologiasList=Object.keys(this.gopiTipologias).map(t=>`'${t.replace(/'/g,"''")}'`).join(',');
-        const _sql=`SELECT init_datetime,date_format('%Y-%m-%d %H:%i','Europe/Lisbon',init_datetime) AS date,status,typology_level_1,typology_level_2,position,address FROM raw_coi_gopiocurrencias WHERE validity_ts IS NULL AND init_datetime>=${desdeMillis} AND typology_level_1 IN (${tipologiasList})`;
-        CCOC.Functions.ac_executa_crate_sql(_sql,'select',5000)
-            .then((data) => {
-                if (!data) data=[];
-                const feats=[];
-                data.forEach(r=>{
-                    const coords=this.parsePosition(r.position);
-                    if (!coords||!this.pontoNoPoligono(coords.lon,coords.lat)) return;
-                    feats.push({type:'Feature',geometry:{type:'Point',coordinates:[coords.lon,coords.lat]},
-                        properties:{typology1:r.typology_level_1,typology2:r.typology_level_2,
-                            status:r.status,date:r.date,address:r.address,
-                            emoji:this.gopiTipologias[r.typology_level_1]||'📍'}});
-                });
-                console.log(`📋 GOPIs: ${feats.length}`);
-                this._mlSetSource('gopis', feats);
-                this.updateGopisCard(feats);
-            })
-            .catch(err=>{console.warn("GOPIs:",err);this.updateGopisCard([]);});
-    }
-
-    updateGopisCard(features) {
-        const el=document.getElementById('gopis-card'); if (!el) return;
-        const getP=(f,k)=>f.properties?.[k]??f.get?.(k);
-        if (!features.length){el.innerHTML=`<b>📋 Ocorrências</b><div class="big-number">0</div><div class="big-number-sub">sem registos hoje</div>`;return;}
-        const porTipo={};
-        features.forEach(f=>{const t=getP(f,'typology1')||'Outras';porTipo[t]=(porTipo[t]||0)+1;});
-        const top4=Object.entries(porTipo).sort((a,b)=>b[1]-a[1]).slice(0,4);
-        let bd='<div class="gopi-breakdown">'; top4.forEach(([t,n])=>{const emoji=this.gopiTipologias[t]||'📍';const lbl=t.length>24?t.substring(0,22)+'…':t;bd+=`${emoji} ${lbl}: <b>${n}</b><br>`;}); bd+='</div>';
-        el.innerHTML=`<b>📋 Ocorrências</b><div class="big-number">${features.length}</div><div class="big-number-sub">na área em análise · hoje</div>${bd}`;
-    }
-
-    // ─── Utilitários ─────────────────────────────────────────────
-
-    updatePlaceholderCards() {
-        const ph=(t)=>`<b>${t}</b><div class="big-number">—</div><div class="big-number-sub">a carregar…</div>`;
-        document.getElementById('trafego-card').innerHTML   = ph('🚗 Tráfego');
-        document.getElementById('alertas-card').innerHTML   = ph('⚠️ Alertas Waze');
-        document.getElementById('carris-card').innerHTML    = ph('🚌 Carris');
-        document.getElementById('densidade-card').innerHTML = ph('📱 Densidade');
-        document.getElementById('ar-card').innerHTML        = ph('💨 Qualidade do Ar');
-        document.getElementById('ruido-card').innerHTML     = ph('🔊 Ruído');
-        document.getElementById('temp-card').innerHTML      = ph('🌡️ Temperatura');
-        document.getElementById('gopis-card').innerHTML     = ph('📋 Ocorrências');
-    }
-
-
-    // ══════════════════════════════════════════════════════════════════════
-    // ARCOS ANIMADOS — Modelo de Gravidade Espacial (Valter Ferreira 2026)
-    // T(i) = C6(i) / d(i, recinto)^β — convergência para o Parque Tejo
-    // Grids alargadas: Cais do Sodré, Baixa, Areeiro, Entrecampos, etc.
-    // Partículas animadas percorrem cada arco em loop contínuo
-    // ══════════════════════════════════════════════════════════════════════
-
-    ARCOS_BETA       = 1.8;
-    ARCOS_TOP        = 40;
-    ARCOS_MIN_DIST   = 500;   // metros — só arcos com alguma distância
-    ARCOS_PARTICLES  = 3;     // partículas por arco
-    PARQUE_LAT       = 38.7755;
-    PARQUE_LON       = -9.0930;
-
-    ARCOS_GRID_LOOKUP = {"3181": {"lat": 38.7719805412, "lon": -9.11004290083, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3133": {"lat": 38.7705797947, "lon": -9.09207659515, "nome": "Rua da Pimenta, Jardim Garcia de Orta", "freguesia": "Parque das Nações"}, "3628": {"lat": 38.7859864937, "lon": -9.09387322572, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3001": {"lat": 38.7677782191, "lon": -9.11902605367, "nome": "Parque do Vale do Silêncio", "freguesia": "Olivais"}, "3217": {"lat": 38.7733812602, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Lumiar"}, "3168": {"lat": 38.7719805412, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3059": {"lat": 38.7691790206, "lon": -9.12082268424, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3169": {"lat": 38.7719805412, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3126": {"lat": 38.7705797947, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "3560": {"lat": 38.7831855233, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3524": {"lat": 38.7817849968, "lon": -9.12261931481, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3684": {"lat": 38.7901877431, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3561": {"lat": 38.7831855233, "lon": -9.12800920651, "nome": "Aeroporto", "freguesia": "Olivais"}, "3603": {"lat": 38.7845860222, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2714": {"lat": 38.7607737988, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2813": {"lat": 38.7635756494, "lon": -9.13519572879, "nome": "Segunda Circular - Terminal 2", "freguesia": "Olivais"}, "2635": {"lat": 38.7593728322, "lon": -9.12441594538, "nome": "Flamengas", "freguesia": "Marvila"}, "2820": {"lat": 38.7635756494, "lon": -9.12261931481, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2808": {"lat": 38.7635756494, "lon": -9.14417888163, "nome": "Olivais", "freguesia": "Olivais"}, "2694": {"lat": 38.7607737988, "lon": -9.12980583708, "nome": "Av. Gago Coutinho", "freguesia": "Alvalade"}, "2686": {"lat": 38.7607737988, "lon": -9.14417888163, "nome": "Alvalade", "freguesia": "Alvalade"}, "2702": {"lat": 38.7607737988, "lon": -9.11543279254, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2700": {"lat": 38.7607737988, "lon": -9.11902605367, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "3672": {"lat": 38.7887873541, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3058": {"lat": 38.7691790206, "lon": -9.12261931481, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3056": {"lat": 38.7691790206, "lon": -9.12621257595, "nome": "Acessos Aeroporto", "freguesia": "Olivais"}, "2996": {"lat": 38.7677782191, "lon": -9.12800920651, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3104": {"lat": 38.7705797947, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "2896": {"lat": 38.7649765335, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2997": {"lat": 38.7677782191, "lon": -9.12621257595, "nome": "Acessos Aeroporto", "freguesia": "Olivais"}, "3117": {"lat": 38.7705797947, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "1912": {"lat": 38.7439603848, "lon": -9.14956877333, "nome": "Av. 5 de Outubro", "freguesia": "Avenidas Novas"}, "3525": {"lat": 38.7817849968, "lon": -9.12082268424, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "2693": {"lat": 38.7607737988, "lon": -9.13160246765, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "3182": {"lat": 38.7719805412, "lon": -9.10824627026, "nome": "Quinta do Conde dos Arcos", "freguesia": "Olivais"}, "3000": {"lat": 38.7677782191, "lon": -9.12082268424, "nome": "Escola Primária Oficial nº 181", "freguesia": "Olivais"}, "3651": {"lat": 38.7873869377, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3534": {"lat": 38.7817849968, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3239": {"lat": 38.7733812602, "lon": -9.1064496397, "nome": "Quinta do Conde dos Arcos", "freguesia": "Olivais"}, "3327": {"lat": 38.7761826158, "lon": -9.1459755122, "nome": "Lumiar", "freguesia": "Lumiar"}, "3669": {"lat": 38.7887873541, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3728": {"lat": 38.7943887448, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3376": {"lat": 38.7775832523, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3424": {"lat": 38.7789838613, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3698": {"lat": 38.7915881045, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3571": {"lat": 38.7831855233, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3520": {"lat": 38.7817849968, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3587": {"lat": 38.7845860222, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3346": {"lat": 38.7761826158, "lon": -9.1118395314, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3623": {"lat": 38.7859864937, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3277": {"lat": 38.7747819518, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3435": {"lat": 38.7789838613, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3127": {"lat": 38.7705797947, "lon": -9.10285637856, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3129": {"lat": 38.7705797947, "lon": -9.09926311742, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3284": {"lat": 38.7747819518, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3162": {"lat": 38.7719805412, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "3441": {"lat": 38.7789838613, "lon": -9.11543279254, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3558": {"lat": 38.7831855233, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3402": {"lat": 38.7775832523, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3555": {"lat": 38.7831855233, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3470": {"lat": 38.7803844428, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3472": {"lat": 38.7803844428, "lon": -9.14238225106, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3599": {"lat": 38.7845860222, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3740": {"lat": 38.7957890237, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3513": {"lat": 38.7817849968, "lon": -9.14238225106, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3554": {"lat": 38.7831855233, "lon": -9.14058562049, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3645": {"lat": 38.7873869377, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3702": {"lat": 38.7915881045, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3429": {"lat": 38.7789838613, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3400": {"lat": 38.7775832523, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3593": {"lat": 38.7845860222, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3528": {"lat": 38.7817849968, "lon": -9.11543279254, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3736": {"lat": 38.7957890237, "lon": -9.09926311742, "nome": "Av. Dom João IIAv. Dom João II", "freguesia": "Parque das Nações"}, "3391": {"lat": 38.7775832523, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3328": {"lat": 38.7761826158, "lon": -9.14417888163, "nome": "Av. Santos e Castro", "freguesia": "Lumiar"}, "3518": {"lat": 38.7817849968, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3741": {"lat": 38.7971892751, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3300": {"lat": 38.7747819518, "lon": -9.09566985629, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3335": {"lat": 38.7761826158, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3687": {"lat": 38.7901877431, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3177": {"lat": 38.7719805412, "lon": -9.1172294231, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3482": {"lat": 38.7803844428, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3490": {"lat": 38.7803844428, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3714": {"lat": 38.7929884384, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3664": {"lat": 38.7887873541, "lon": -9.14417888163, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3533": {"lat": 38.7817849968, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3399": {"lat": 38.7775832523, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3529": {"lat": 38.7817849968, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2650": {"lat": 38.7593728322, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2746": {"lat": 38.7621747379, "lon": -9.1459755122, "nome": "Segunda Circular {Campo Grande - Terminal 2}", "freguesia": "Alvalade"}, "2890": {"lat": 38.7649765335, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2930": {"lat": 38.76637739, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "2823": {"lat": 38.7635756494, "lon": -9.1172294231, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2830": {"lat": 38.7635756494, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2765": {"lat": 38.7621747379, "lon": -9.1118395314, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2755": {"lat": 38.7621747379, "lon": -9.12980583708, "nome": "Relógio", "freguesia": "Alvalade"}, "2953": {"lat": 38.76637739, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2827": {"lat": 38.7635756494, "lon": -9.11004290083, "nome": "Av. Cidade de Luanda", "freguesia": "Olivais"}, "2767": {"lat": 38.7621747379, "lon": -9.10824627026, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2875": {"lat": 38.7649765335, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3005": {"lat": 38.7677782191, "lon": -9.1118395314, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3103": {"lat": 38.7705797947, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3064": {"lat": 38.7691790206, "lon": -9.1118395314, "nome": "Piscinas dos Olivais", "freguesia": "Olivais"}, "2998": {"lat": 38.7677782191, "lon": -9.12441594538, "nome": "2ª Circular - Av. de Berlim", "freguesia": "Olivais"}, "3114": {"lat": 38.7705797947, "lon": -9.12621257595, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3071": {"lat": 38.7691790206, "lon": -9.09926311742, "nome": "Via Reciproca", "freguesia": "Parque das Nações"}, "1983": {"lat": 38.7453616539, "lon": -9.13519572879, "nome": "Areeiro", "freguesia": "Areeiro"}, "352": {"lat": 38.7061157257, "lon": -9.14238225106, "nome": "Cais do Sodré", "freguesia": "Misericórdia"}, "2754": {"lat": 38.7621747379, "lon": -9.13160246765, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "2695": {"lat": 38.7607737988, "lon": -9.12800920651, "nome": "Avenida José Régio, Parque da Belavista-Golfe", "freguesia": "Marvila"}, "2952": {"lat": 38.76637739, "lon": -9.09926311742, "nome": "Gare do Oriente", "freguesia": "Parque das Nações"}, "3225": {"lat": 38.7733812602, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3128": {"lat": 38.7705797947, "lon": -9.10105974799, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3183": {"lat": 38.7719805412, "lon": -9.1064496397, "nome": "DRMM", "freguesia": "Olivais"}, "3173": {"lat": 38.7719805412, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "305": {"lat": 38.7047136867, "lon": -9.14238225106, "nome": "Faixa Ribeirinha de Santos", "freguesia": "Misericórdia"}, "304": {"lat": 38.7047136867, "lon": -9.14417888163, "nome": "Faixa Ribeirinha de Santos", "freguesia": "Misericórdia"}, "3227": {"lat": 38.7733812602, "lon": -9.12800920651, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3185": {"lat": 38.7719805412, "lon": -9.10285637856, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3700": {"lat": 38.7915881045, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3730": {"lat": 38.7943887448, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3717": {"lat": 38.7929884384, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3586": {"lat": 38.7845860222, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "2691": {"lat": 38.7607737988, "lon": -9.13519572879, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "2654": {"lat": 38.7593728322, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2651": {"lat": 38.7593728322, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2825": {"lat": 38.7635756494, "lon": -9.11363616197, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2653": {"lat": 38.7593728322, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2699": {"lat": 38.7607737988, "lon": -9.12082268424, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2627": {"lat": 38.7593728322, "lon": -9.13878898992, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "2704": {"lat": 38.7607737988, "lon": -9.1118395314, "nome": "Av. Cidade de Luanda", "freguesia": "Olivais"}, "3006": {"lat": 38.7677782191, "lon": -9.11004290083, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "2892": {"lat": 38.7649765335, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "3070": {"lat": 38.7691790206, "lon": -9.10105974799, "nome": "Via Reciproca", "freguesia": "Parque das Nações"}, "3111": {"lat": 38.7705797947, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3068": {"lat": 38.7691790206, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2891": {"lat": 38.7649765335, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2999": {"lat": 38.7677782191, "lon": -9.12261931481, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3115": {"lat": 38.7705797947, "lon": -9.12441594538, "nome": "2ª Circular - Av. de Berlim", "freguesia": "Olivais"}, "3108": {"lat": 38.7705797947, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "356": {"lat": 38.7061157257, "lon": -9.13519572879, "nome": "Zona Ribeirinha - Sta Apolónia", "freguesia": "Santa Maria Maior"}, "1982": {"lat": 38.7453616539, "lon": -9.13699235936, "nome": "Av. Madrid", "freguesia": "Areeiro"}, "2711": {"lat": 38.7607737988, "lon": -9.09926311742, "nome": "Alameda dos Oceanos, Jardim do Cabeço das Rolas", "freguesia": "Parque das Nações"}, "2630": {"lat": 38.7593728322, "lon": -9.13339909822, "nome": "Parque José Gomes Ferreira - Mata de Alvalade", "freguesia": "Alvalade"}, "3236": {"lat": 38.7733812602, "lon": -9.1118395314, "nome": "Olivais Norte", "freguesia": "Olivais"}, "2624": {"lat": 38.7593728322, "lon": -9.14417888163, "nome": "Hospital Julio de Matos", "freguesia": "Alvalade"}, "2629": {"lat": 38.7593728322, "lon": -9.13519572879, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "3279": {"lat": 38.7747819518, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3286": {"lat": 38.7747819518, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3130": {"lat": 38.7705797947, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3589": {"lat": 38.7845860222, "lon": -9.14058562049, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3668": {"lat": 38.7887873541, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3519": {"lat": 38.7817849968, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3622": {"lat": 38.7859864937, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3527": {"lat": 38.7817849968, "lon": -9.1172294231, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3621": {"lat": 38.7859864937, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3392": {"lat": 38.7775832523, "lon": -9.1172294231, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3383": {"lat": 38.7775832523, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3556": {"lat": 38.7831855233, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3176": {"lat": 38.7719805412, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3618": {"lat": 38.7859864937, "lon": -9.14417888163, "nome": "Jardim da Quinta Alegre - Campo das Amoreiras", "freguesia": "Santa Clara"}, "3350": {"lat": 38.7761826158, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3297": {"lat": 38.7747819518, "lon": -9.10105974799, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3428": {"lat": 38.7789838613, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3302": {"lat": 38.7747819518, "lon": -9.09207659515, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3395": {"lat": 38.7775832523, "lon": -9.1118395314, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3572": {"lat": 38.7831855233, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3523": {"lat": 38.7817849968, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3476": {"lat": 38.7803844428, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3617": {"lat": 38.7859864937, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3553": {"lat": 38.7831855233, "lon": -9.14238225106, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3552": {"lat": 38.7831855233, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3442": {"lat": 38.7789838613, "lon": -9.11363616197, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3699": {"lat": 38.7915881045, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3495": {"lat": 38.7803844428, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3447": {"lat": 38.7789838613, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3565": {"lat": 38.7831855233, "lon": -9.12082268424, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3598": {"lat": 38.7845860222, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3526": {"lat": 38.7817849968, "lon": -9.11902605367, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3275": {"lat": 38.7747819518, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3273": {"lat": 38.7747819518, "lon": -9.14417888163, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3652": {"lat": 38.7873869377, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3444": {"lat": 38.7789838613, "lon": -9.11004290083, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3449": {"lat": 38.7789838613, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3434": {"lat": 38.7789838613, "lon": -9.12800920651, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3511": {"lat": 38.7817849968, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "2831": {"lat": 38.7635756494, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2814": {"lat": 38.7635756494, "lon": -9.13339909822, "nome": "Segunda Circular - Terminal 2", "freguesia": "Olivais"}, "2762": {"lat": 38.7621747379, "lon": -9.1172294231, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2643": {"lat": 38.7593728322, "lon": -9.11004290083, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2768": {"lat": 38.7621747379, "lon": -9.1064496397, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2954": {"lat": 38.76637739, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2950": {"lat": 38.76637739, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2886": {"lat": 38.7649765335, "lon": -9.1118395314, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2936": {"lat": 38.76637739, "lon": -9.12800920651, "nome": "Acessos Aeroporto", "freguesia": "Olivais"}, "2929": {"lat": 38.76637739, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "2759": {"lat": 38.7621747379, "lon": -9.12261931481, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "2766": {"lat": 38.7621747379, "lon": -9.11004290083, "nome": "Av. Cidade de Luanda", "freguesia": "Olivais"}, "2867": {"lat": 38.7649765335, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "2869": {"lat": 38.7649765335, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3105": {"lat": 38.7705797947, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3016": {"lat": 38.7677782191, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3062": {"lat": 38.7691790206, "lon": -9.11543279254, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3063": {"lat": 38.7691790206, "lon": -9.11363616197, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "2993": {"lat": 38.7677782191, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3047": {"lat": 38.7691790206, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "1984": {"lat": 38.7453616539, "lon": -9.13339909822, "nome": "Areeiro", "freguesia": "Areeiro"}, "1913": {"lat": 38.7439603848, "lon": -9.14777214276, "nome": "Avenida da República", "freguesia": "Avenidas Novas"}, "3494": {"lat": 38.7803844428, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "2690": {"lat": 38.7607737988, "lon": -9.13699235936, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "2751": {"lat": 38.7621747379, "lon": -9.13699235936, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "3125": {"lat": 38.7705797947, "lon": -9.1064496397, "nome": "DRMM", "freguesia": "Olivais"}, "3220": {"lat": 38.7733812602, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3247": {"lat": 38.7733812602, "lon": -9.09207659515, "nome": "Rua da Pimenta, Jardim Garcia de Orta", "freguesia": "Parque das Nações"}, "3161": {"lat": 38.7719805412, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3334": {"lat": 38.7761826158, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3164": {"lat": 38.7719805412, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3425": {"lat": 38.7789838613, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3715": {"lat": 38.7929884384, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3437": {"lat": 38.7789838613, "lon": -9.12261931481, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "3430": {"lat": 38.7789838613, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "2769": {"lat": 38.7621747379, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2757": {"lat": 38.7621747379, "lon": -9.12621257595, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2761": {"lat": 38.7621747379, "lon": -9.11902605367, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2951": {"lat": 38.76637739, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "2756": {"lat": 38.7621747379, "lon": -9.12800920651, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2934": {"lat": 38.76637739, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "2760": {"lat": 38.7621747379, "lon": -9.12082268424, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2948": {"lat": 38.76637739, "lon": -9.1064496397, "nome": "Olivais, junto Cemitério", "freguesia": "Olivais"}, "2955": {"lat": 38.76637739, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2949": {"lat": 38.76637739, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2932": {"lat": 38.76637739, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "2946": {"lat": 38.76637739, "lon": -9.11004290083, "nome": "Av. Cidade de Luanda", "freguesia": "Olivais"}, "2933": {"lat": 38.76637739, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "2632": {"lat": 38.7593728322, "lon": -9.12980583708, "nome": "Av. Gago Coutinho", "freguesia": "Alvalade"}, "2816": {"lat": 38.7635756494, "lon": -9.12980583708, "nome": "Relógio", "freguesia": "Olivais"}, "2837": {"lat": 38.7635756494, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2652": {"lat": 38.7593728322, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2834": {"lat": 38.7635756494, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2707": {"lat": 38.7607737988, "lon": -9.1064496397, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2698": {"lat": 38.7607737988, "lon": -9.12261931481, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2703": {"lat": 38.7607737988, "lon": -9.11363616197, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2817": {"lat": 38.7635756494, "lon": -9.12800920651, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "2824": {"lat": 38.7635756494, "lon": -9.11543279254, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2812": {"lat": 38.7635756494, "lon": -9.13699235936, "nome": "Segunda Circular - Terminal 2", "freguesia": "Olivais"}, "2835": {"lat": 38.7635756494, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2945": {"lat": 38.76637739, "lon": -9.1118395314, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2701": {"lat": 38.7607737988, "lon": -9.1172294231, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "2877": {"lat": 38.7649765335, "lon": -9.12800920651, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "2880": {"lat": 38.7649765335, "lon": -9.12261931481, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3107": {"lat": 38.7705797947, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "2879": {"lat": 38.7649765335, "lon": -9.12441594538, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2986": {"lat": 38.7677782191, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "2882": {"lat": 38.7649765335, "lon": -9.11902605367, "nome": "Parque do Vale do Silêncio", "freguesia": "Olivais"}, "409": {"lat": 38.7075177371, "lon": -9.13339909822, "nome": "Infante Dom Henrique - até Sta Apolónia", "freguesia": "Santa Maria Maior"}, "3014": {"lat": 38.7677782191, "lon": -9.09566985629, "nome": "Alameda dos Oceanos, Alameda dos Oceanos", "freguesia": "Parque das Nações"}, "3481": {"lat": 38.7803844428, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3626": {"lat": 38.7859864937, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3341": {"lat": 38.7761826158, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3330": {"lat": 38.7761826158, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3283": {"lat": 38.7747819518, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3347": {"lat": 38.7761826158, "lon": -9.11004290083, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3663": {"lat": 38.7887873541, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3226": {"lat": 38.7733812602, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3242": {"lat": 38.7733812602, "lon": -9.10105974799, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3223": {"lat": 38.7733812602, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3339": {"lat": 38.7761826158, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3336": {"lat": 38.7761826158, "lon": -9.12980583708, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3681": {"lat": 38.7901877431, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3234": {"lat": 38.7733812602, "lon": -9.11543279254, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3174": {"lat": 38.7719805412, "lon": -9.12261931481, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3178": {"lat": 38.7719805412, "lon": -9.11543279254, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3290": {"lat": 38.7747819518, "lon": -9.11363616197, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3716": {"lat": 38.7929884384, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3562": {"lat": 38.7831855233, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3348": {"lat": 38.7761826158, "lon": -9.10824627026, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3512": {"lat": 38.7817849968, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3352": {"lat": 38.7761826158, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3436": {"lat": 38.7789838613, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3479": {"lat": 38.7803844428, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3514": {"lat": 38.7817849968, "lon": -9.14058562049, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3187": {"lat": 38.7719805412, "lon": -9.09926311742, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3188": {"lat": 38.7719805412, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3557": {"lat": 38.7831855233, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3516": {"lat": 38.7817849968, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3427": {"lat": 38.7789838613, "lon": -9.14058562049, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3742": {"lat": 38.7971892751, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3171": {"lat": 38.7719805412, "lon": -9.12800920651, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3432": {"lat": 38.7789838613, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3624": {"lat": 38.7859864937, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3385": {"lat": 38.7775832523, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3344": {"lat": 38.7761826158, "lon": -9.11543279254, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3010": {"lat": 38.7677782191, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "3048": {"lat": 38.7691790206, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3049": {"lat": 38.7691790206, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3110": {"lat": 38.7705797947, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "2887": {"lat": 38.7649765335, "lon": -9.11004290083, "nome": "Av. Cidade de Luanda", "freguesia": "Olivais"}, "2995": {"lat": 38.7677782191, "lon": -9.12980583708, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3057": {"lat": 38.7691790206, "lon": -9.12441594538, "nome": "2ª Circular - Av. de Berlim", "freguesia": "Olivais"}, "3067": {"lat": 38.7691790206, "lon": -9.1064496397, "nome": "Olivais Velho", "freguesia": "Olivais"}, "2873": {"lat": 38.7649765335, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "2874": {"lat": 38.7649765335, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3051": {"lat": 38.7691790206, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3113": {"lat": 38.7705797947, "lon": -9.12800920651, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3050": {"lat": 38.7691790206, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "2990": {"lat": 38.7677782191, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "351": {"lat": 38.7061157257, "lon": -9.14417888163, "nome": "Cais do Sodré", "freguesia": "Misericórdia"}, "3245": {"lat": 38.7733812602, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3179": {"lat": 38.7719805412, "lon": -9.11363616197, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "2750": {"lat": 38.7621747379, "lon": -9.13878898992, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "3531": {"lat": 38.7817849968, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3731": {"lat": 38.7943887448, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3588": {"lat": 38.7845860222, "lon": -9.14238225106, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3726": {"lat": 38.7943887448, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3394": {"lat": 38.7775832523, "lon": -9.11363616197, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3590": {"lat": 38.7845860222, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3737": {"lat": 38.7957890237, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3296": {"lat": 38.7747819518, "lon": -9.10285637856, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3493": {"lat": 38.7803844428, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3727": {"lat": 38.7943887448, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3287": {"lat": 38.7747819518, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3401": {"lat": 38.7775832523, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3697": {"lat": 38.7915881045, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "2748": {"lat": 38.7621747379, "lon": -9.14238225106, "nome": "Segunda Circular {Campo Grande - Terminal 2}", "freguesia": "Alvalade"}, "2640": {"lat": 38.7593728322, "lon": -9.11543279254, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2764": {"lat": 38.7621747379, "lon": -9.11363616197, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2647": {"lat": 38.7593728322, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2822": {"lat": 38.7635756494, "lon": -9.11902605367, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2638": {"lat": 38.7593728322, "lon": -9.11902605367, "nome": "Zona I", "freguesia": "Marvila"}, "2709": {"lat": 38.7607737988, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2706": {"lat": 38.7607737988, "lon": -9.10824627026, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2692": {"lat": 38.7607737988, "lon": -9.13339909822, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "2775": {"lat": 38.7621747379, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2770": {"lat": 38.7621747379, "lon": -9.10285637856, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2771": {"lat": 38.7621747379, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "2926": {"lat": 38.76637739, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "2876": {"lat": 38.7649765335, "lon": -9.12980583708, "nome": "Acessos Aeroporto", "freguesia": "Olivais"}, "350": {"lat": 38.7061157257, "lon": -9.1459755122, "nome": "Av. 24 Julho {Santos - Cais do Sodré}", "freguesia": "Misericórdia"}, "358": {"lat": 38.7061157257, "lon": -9.13160246765, "nome": "Zona Ribeirinha - Sta Apolónia", "freguesia": "Santa Maria Maior"}, "357": {"lat": 38.7061157257, "lon": -9.13339909822, "nome": "Zona Ribeirinha - Sta Apolónia", "freguesia": "Santa Maria Maior"}, "3439": {"lat": 38.7789838613, "lon": -9.11902605367, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "2685": {"lat": 38.7607737988, "lon": -9.1459755122, "nome": "Hospital Julio de Matos", "freguesia": "Alvalade"}, "2646": {"lat": 38.7593728322, "lon": -9.10465300913, "nome": "Casal dos Machados", "freguesia": "Olivais"}, "3012": {"lat": 38.7677782191, "lon": -9.09926311742, "nome": "Gare do Oriente", "freguesia": "Parque das Nações"}, "2633": {"lat": 38.7593728322, "lon": -9.12800920651, "nome": "Avenida José Régio, Parque da Belavista-Golfe", "freguesia": "Marvila"}, "3485": {"lat": 38.7803844428, "lon": -9.11902605367, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "3002": {"lat": 38.7677782191, "lon": -9.1172294231, "nome": "Parque do Vale do Silêncio", "freguesia": "Olivais"}, "2649": {"lat": 38.7593728322, "lon": -9.09926311742, "nome": "Alameda dos Oceanos, Jardim do Cabeço das Rolas", "freguesia": "Parque das Nações"}, "3484": {"lat": 38.7803844428, "lon": -9.12082268424, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "3568": {"lat": 38.7831855233, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3594": {"lat": 38.7845860222, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3282": {"lat": 38.7747819518, "lon": -9.12800920651, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3163": {"lat": 38.7719805412, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3349": {"lat": 38.7761826158, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3333": {"lat": 38.7761826158, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3380": {"lat": 38.7775832523, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3288": {"lat": 38.7747819518, "lon": -9.1172294231, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3298": {"lat": 38.7747819518, "lon": -9.09926311742, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3564": {"lat": 38.7831855233, "lon": -9.12261931481, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3118": {"lat": 38.7705797947, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3491": {"lat": 38.7803844428, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3167": {"lat": 38.7719805412, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3559": {"lat": 38.7831855233, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3291": {"lat": 38.7747819518, "lon": -9.1118395314, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3596": {"lat": 38.7845860222, "lon": -9.12800920651, "nome": "Aeroporto", "freguesia": "Olivais"}, "3521": {"lat": 38.7817849968, "lon": -9.12800920651, "nome": "Aeroporto", "freguesia": "Olivais"}, "3487": {"lat": 38.7803844428, "lon": -9.11543279254, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3281": {"lat": 38.7747819518, "lon": -9.12980583708, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3289": {"lat": 38.7747819518, "lon": -9.11543279254, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3121": {"lat": 38.7705797947, "lon": -9.11363616197, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3337": {"lat": 38.7761826158, "lon": -9.12800920651, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3683": {"lat": 38.7901877431, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3280": {"lat": 38.7747819518, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3488": {"lat": 38.7803844428, "lon": -9.11363616197, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3331": {"lat": 38.7761826158, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3166": {"lat": 38.7719805412, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3189": {"lat": 38.7719805412, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3235": {"lat": 38.7733812602, "lon": -9.11363616197, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3303": {"lat": 38.7747819518, "lon": -9.09027996458, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3384": {"lat": 38.7775832523, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3471": {"lat": 38.7803844428, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3276": {"lat": 38.7747819518, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3285": {"lat": 38.7747819518, "lon": -9.12261931481, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3532": {"lat": 38.7817849968, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3480": {"lat": 38.7803844428, "lon": -9.12800920651, "nome": "Figo Maduro", "freguesia": "Olivais"}, "2872": {"lat": 38.7649765335, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "2870": {"lat": 38.7649765335, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "2871": {"lat": 38.7649765335, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3072": {"lat": 38.7691790206, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2878": {"lat": 38.7649765335, "lon": -9.12621257595, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3061": {"lat": 38.7691790206, "lon": -9.1172294231, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "2894": {"lat": 38.7649765335, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3009": {"lat": 38.7677782191, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "2885": {"lat": 38.7649765335, "lon": -9.11363616197, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2989": {"lat": 38.7677782191, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "3060": {"lat": 38.7691790206, "lon": -9.11902605367, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "2994": {"lat": 38.7677782191, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3052": {"lat": 38.7691790206, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3743": {"lat": 38.7971892751, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3054": {"lat": 38.7691790206, "lon": -9.12980583708, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3180": {"lat": 38.7719805412, "lon": -9.1118395314, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "2836": {"lat": 38.7635756494, "lon": -9.09387322572, "nome": "Oceanário", "freguesia": "Parque das Nações"}, "2626": {"lat": 38.7593728322, "lon": -9.14058562049, "nome": "Laboratório Nacional de Engenharia Civil", "freguesia": "Alvalade"}, "2689": {"lat": 38.7607737988, "lon": -9.13878898992, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "2623": {"lat": 38.7593728322, "lon": -9.1459755122, "nome": "Hospital Julio de Matos", "freguesia": "Alvalade"}, "3165": {"lat": 38.7719805412, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3450": {"lat": 38.7789838613, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3240": {"lat": 38.7733812602, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "3738": {"lat": 38.7957890237, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3233": {"lat": 38.7733812602, "lon": -9.1172294231, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3224": {"lat": 38.7733812602, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3377": {"lat": 38.7775832523, "lon": -9.14417888163, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3232": {"lat": 38.7733812602, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3218": {"lat": 38.7733812602, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "3191": {"lat": 38.7719805412, "lon": -9.09207659515, "nome": "Rua da Pimenta, Jardim Garcia de Orta", "freguesia": "Parque das Nações"}, "3219": {"lat": 38.7733812602, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3243": {"lat": 38.7733812602, "lon": -9.09926311742, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3184": {"lat": 38.7719805412, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "2688": {"lat": 38.7607737988, "lon": -9.14058562049, "nome": "Laboratório Nacional de Engenharia Civil", "freguesia": "Alvalade"}, "2713": {"lat": 38.7607737988, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3704": {"lat": 38.7915881045, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2628": {"lat": 38.7593728322, "lon": -9.13699235936, "nome": "Avenida de Brasil", "freguesia": "Alvalade"}, "2636": {"lat": 38.7593728322, "lon": -9.12261931481, "nome": "Flamengas", "freguesia": "Marvila"}, "2641": {"lat": 38.7593728322, "lon": -9.11363616197, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "2807": {"lat": 38.7635756494, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "2749": {"lat": 38.7621747379, "lon": -9.14058562049, "nome": "Alvalade", "freguesia": "Alvalade"}, "2696": {"lat": 38.7607737988, "lon": -9.12621257595, "nome": "Flamengas", "freguesia": "Marvila"}, "2715": {"lat": 38.7607737988, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2991": {"lat": 38.7677782191, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3066": {"lat": 38.7691790206, "lon": -9.10824627026, "nome": "Olivais Velho", "freguesia": "Olivais"}, "2992": {"lat": 38.7677782191, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "2893": {"lat": 38.7649765335, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3486": {"lat": 38.7803844428, "lon": -9.1172294231, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3438": {"lat": 38.7789838613, "lon": -9.12082268424, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3011": {"lat": 38.7677782191, "lon": -9.10105974799, "nome": "Gare do Oriente", "freguesia": "Parque das Nações"}, "2712": {"lat": 38.7607737988, "lon": -9.09746648685, "nome": "Alameda dos Oceanos, Jardim do Cabeço das Rolas", "freguesia": "Parque das Nações"}, "3440": {"lat": 38.7789838613, "lon": -9.1172294231, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "3246": {"lat": 38.7733812602, "lon": -9.09387322572, "nome": "FIL", "freguesia": "Parque das Nações"}, "2944": {"lat": 38.76637739, "lon": -9.11363616197, "nome": "Escola Básica de 2, 3 de Fernando Pessoa", "freguesia": "Olivais"}, "3641": {"lat": 38.7873869377, "lon": -9.1459755122, "nome": "Charneca do Lumiar", "freguesia": "Santa Clara"}, "3648": {"lat": 38.7873869377, "lon": -9.09746648685, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3190": {"lat": 38.7719805412, "lon": -9.09387322572, "nome": "FIL", "freguesia": "Parque das Nações"}, "2625": {"lat": 38.7593728322, "lon": -9.14238225106, "nome": "Laboratório Nacional de Engenharia Civil", "freguesia": "Alvalade"}, "2942": {"lat": 38.76637739, "lon": -9.1172294231, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3426": {"lat": 38.7789838613, "lon": -9.14238225106, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3517": {"lat": 38.7817849968, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3685": {"lat": 38.7901877431, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3535": {"lat": 38.7817849968, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3625": {"lat": 38.7859864937, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3431": {"lat": 38.7789838613, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3293": {"lat": 38.7747819518, "lon": -9.10824627026, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3701": {"lat": 38.7915881045, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3595": {"lat": 38.7845860222, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3241": {"lat": 38.7733812602, "lon": -9.10285637856, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3719": {"lat": 38.7929884384, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3379": {"lat": 38.7775832523, "lon": -9.14058562049, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3299": {"lat": 38.7747819518, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3272": {"lat": 38.7747819518, "lon": -9.1459755122, "nome": "Lumiar", "freguesia": "Lumiar"}, "3703": {"lat": 38.7915881045, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3477": {"lat": 38.7803844428, "lon": -9.13339909822, "nome": "Aeroporto", "freguesia": "Olivais"}, "3739": {"lat": 38.7957890237, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3489": {"lat": 38.7803844428, "lon": -9.1118395314, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3388": {"lat": 38.7775832523, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3570": {"lat": 38.7831855233, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3686": {"lat": 38.7901877431, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3390": {"lat": 38.7775832523, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3446": {"lat": 38.7789838613, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3563": {"lat": 38.7831855233, "lon": -9.12441594538, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3592": {"lat": 38.7845860222, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3665": {"lat": 38.7887873541, "lon": -9.14238225106, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3389": {"lat": 38.7775832523, "lon": -9.12261931481, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3718": {"lat": 38.7929884384, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3667": {"lat": 38.7887873541, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3551": {"lat": 38.7831855233, "lon": -9.1459755122, "nome": "Santa Clara", "freguesia": "Santa Clara"}, "3619": {"lat": 38.7859864937, "lon": -9.14238225106, "nome": "Jardim da Quinta Alegre - Campo das Amoreiras", "freguesia": "Santa Clara"}, "3729": {"lat": 38.7943887448, "lon": -9.09746648685, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3646": {"lat": 38.7873869377, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3119": {"lat": 38.7705797947, "lon": -9.1172294231, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3229": {"lat": 38.7733812602, "lon": -9.12441594538, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3473": {"lat": 38.7803844428, "lon": -9.14058562049, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3398": {"lat": 38.7775832523, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3600": {"lat": 38.7845860222, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3387": {"lat": 38.7775832523, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3124": {"lat": 38.7705797947, "lon": -9.10824627026, "nome": "DRMM", "freguesia": "Olivais"}, "3397": {"lat": 38.7775832523, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3475": {"lat": 38.7803844428, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3120": {"lat": 38.7705797947, "lon": -9.11543279254, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3378": {"lat": 38.7775832523, "lon": -9.14238225106, "nome": "Av. Santos e Castro", "freguesia": "Lumiar"}, "3231": {"lat": 38.7733812602, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3643": {"lat": 38.7873869377, "lon": -9.14238225106, "nome": "Jardim da Quinta Alegre - Campo das Amoreiras", "freguesia": "Santa Clara"}, "2811": {"lat": 38.7635756494, "lon": -9.13878898992, "nome": "Segunda Circular - Terminal 2", "freguesia": "Olivais"}, "2832": {"lat": 38.7635756494, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "2644": {"lat": 38.7593728322, "lon": -9.10824627026, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2645": {"lat": 38.7593728322, "lon": -9.1064496397, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2634": {"lat": 38.7593728322, "lon": -9.12621257595, "nome": "Flamengas", "freguesia": "Marvila"}, "2826": {"lat": 38.7635756494, "lon": -9.1118395314, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2772": {"lat": 38.7621747379, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2821": {"lat": 38.7635756494, "lon": -9.12082268424, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2763": {"lat": 38.7621747379, "lon": -9.11543279254, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2833": {"lat": 38.7635756494, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2773": {"lat": 38.7621747379, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "2776": {"lat": 38.7621747379, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2774": {"lat": 38.7621747379, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "2939": {"lat": 38.76637739, "lon": -9.12261931481, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2987": {"lat": 38.7677782191, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "2937": {"lat": 38.76637739, "lon": -9.12621257595, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "2884": {"lat": 38.7649765335, "lon": -9.11543279254, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2881": {"lat": 38.7649765335, "lon": -9.12082268424, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2956": {"lat": 38.76637739, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3004": {"lat": 38.7677782191, "lon": -9.11363616197, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3075": {"lat": 38.7691790206, "lon": -9.09207659515, "nome": "Rua da Pimenta, Jardim Garcia de Orta", "freguesia": "Parque das Nações"}, "3065": {"lat": 38.7691790206, "lon": -9.11004290083, "nome": "Olivais Norte", "freguesia": "Olivais"}, "2752": {"lat": 38.7621747379, "lon": -9.13519572879, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "2941": {"lat": 38.76637739, "lon": -9.11902605367, "nome": "Parque do Vale do Silêncio", "freguesia": "Olivais"}, "3601": {"lat": 38.7845860222, "lon": -9.09387322572, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "2943": {"lat": 38.76637739, "lon": -9.11543279254, "nome": "Escola Básica de 2, 3 de Fernando Pessoa", "freguesia": "Olivais"}, "3238": {"lat": 38.7733812602, "lon": -9.10824627026, "nome": "Quinta do Conde dos Arcos", "freguesia": "Olivais"}, "3642": {"lat": 38.7873869377, "lon": -9.14417888163, "nome": "Jardim da Quinta Alegre - Campo das Amoreiras", "freguesia": "Santa Clara"}, "3123": {"lat": 38.7705797947, "lon": -9.11004290083, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "410": {"lat": 38.7075177371, "lon": -9.13160246765, "nome": "Infante Dom Henrique - até Sta Apolónia", "freguesia": "Santa Maria Maior"}, "3629": {"lat": 38.7859864937, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3712": {"lat": 38.7929884384, "lon": -9.1459755122, "nome": "Galinheiras A} Ameixoeira", "freguesia": "Santa Clara"}, "3292": {"lat": 38.7747819518, "lon": -9.11004290083, "nome": "Quinta do Conde dos Arcos", "freguesia": "Olivais"}, "3228": {"lat": 38.7733812602, "lon": -9.12621257595, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3237": {"lat": 38.7733812602, "lon": -9.11004290083, "nome": "Quinta do Conde dos Arcos", "freguesia": "Olivais"}, "3627": {"lat": 38.7859864937, "lon": -9.09566985629, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3340": {"lat": 38.7761826158, "lon": -9.12261931481, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3274": {"lat": 38.7747819518, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3221": {"lat": 38.7733812602, "lon": -9.13878898992, "nome": "Aeroporto", "freguesia": "Olivais"}, "3445": {"lat": 38.7789838613, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3567": {"lat": 38.7831855233, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3294": {"lat": 38.7747819518, "lon": -9.1064496397, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Olivais"}, "3591": {"lat": 38.7845860222, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3732": {"lat": 38.7943887448, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3620": {"lat": 38.7859864937, "lon": -9.14058562049, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3515": {"lat": 38.7817849968, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3649": {"lat": 38.7873869377, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3522": {"lat": 38.7817849968, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3382": {"lat": 38.7775832523, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3733": {"lat": 38.7943887448, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3492": {"lat": 38.7803844428, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3530": {"lat": 38.7817849968, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3483": {"lat": 38.7803844428, "lon": -9.12261931481, "nome": "Quinta do Morgado", "freguesia": "Olivais"}, "3478": {"lat": 38.7803844428, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3670": {"lat": 38.7887873541, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3650": {"lat": 38.7873869377, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3566": {"lat": 38.7831855233, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3666": {"lat": 38.7887873541, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3393": {"lat": 38.7775832523, "lon": -9.11543279254, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3474": {"lat": 38.7803844428, "lon": -9.13878898992, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3295": {"lat": 38.7747819518, "lon": -9.10465300913, "nome": "Av. Infante D. Henrique - Olivais", "freguesia": "Parque das Nações"}, "3278": {"lat": 38.7747819518, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "3443": {"lat": 38.7789838613, "lon": -9.1118395314, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3396": {"lat": 38.7775832523, "lon": -9.11004290083, "nome": "Alfredo Bensaude", "freguesia": "Olivais"}, "3713": {"lat": 38.7929884384, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3644": {"lat": 38.7873869377, "lon": -9.14058562049, "nome": "Av. Santos e Castro", "freguesia": "Santa Clara"}, "3055": {"lat": 38.7691790206, "lon": -9.12800920651, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "3106": {"lat": 38.7705797947, "lon": -9.14058562049, "nome": "Aeroporto", "freguesia": "Olivais"}, "2868": {"lat": 38.7649765335, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "2988": {"lat": 38.7677782191, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "3003": {"lat": 38.7677782191, "lon": -9.11543279254, "nome": "Olivais Sul", "freguesia": "Olivais"}, "3045": {"lat": 38.7691790206, "lon": -9.1459755122, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3116": {"lat": 38.7705797947, "lon": -9.12261931481, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3015": {"lat": 38.7677782191, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3069": {"lat": 38.7691790206, "lon": -9.10285637856, "nome": "Via Reciproca", "freguesia": "Parque das Nações"}, "3046": {"lat": 38.7691790206, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "3008": {"lat": 38.7677782191, "lon": -9.1064496397, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3053": {"lat": 38.7691790206, "lon": -9.13160246765, "nome": "Aeroporto", "freguesia": "Olivais"}, "3074": {"lat": 38.7691790206, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3007": {"lat": 38.7677782191, "lon": -9.10824627026, "nome": "Av. de Berlim", "freguesia": "Olivais"}, "3109": {"lat": 38.7705797947, "lon": -9.13519572879, "nome": "Aeroporto", "freguesia": "Olivais"}, "2895": {"lat": 38.7649765335, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "1975": {"lat": 38.7453616539, "lon": -9.14956877333, "nome": "Av. 5 de Outubro", "freguesia": "Avenidas Novas"}, "1976": {"lat": 38.7453616539, "lon": -9.14777214276, "nome": "Avenida da República", "freguesia": "Avenidas Novas"}, "3112": {"lat": 38.7705797947, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "2631": {"lat": 38.7593728322, "lon": -9.13160246765, "nome": "Parque José Gomes Ferreira - Mata de Alvalade", "freguesia": "Alvalade"}, "3132": {"lat": 38.7705797947, "lon": -9.09387322572, "nome": "FIL", "freguesia": "Parque das Nações"}, "3170": {"lat": 38.7719805412, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3602": {"lat": 38.7845860222, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "3073": {"lat": 38.7691790206, "lon": -9.09566985629, "nome": "Alameda dos Oceanos, Alameda dos Oceanos", "freguesia": "Parque das Nações"}, "303": {"lat": 38.7047136867, "lon": -9.1459755122, "nome": "Faixa Ribeirinha de Santos", "freguesia": "Misericórdia"}, "408": {"lat": 38.7075177371, "lon": -9.13519572879, "nome": "Praça do Comércio", "freguesia": "Santa Maria Maior"}, "3122": {"lat": 38.7705797947, "lon": -9.1118395314, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3013": {"lat": 38.7677782191, "lon": -9.09746648685, "nome": "Centro Vasco da Gama", "freguesia": "Parque das Nações"}, "3671": {"lat": 38.7887873541, "lon": -9.09207659515, "nome": "Passeio do Tejo, Parque Urbano do Tejo e Trancão", "freguesia": "Parque das Nações"}, "2753": {"lat": 38.7621747379, "lon": -9.13339909822, "nome": "S. João de Brito/ Pote D`Agua", "freguesia": "Alvalade"}, "3332": {"lat": 38.7761826158, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3244": {"lat": 38.7733812602, "lon": -9.09746648685, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3682": {"lat": 38.7901877431, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3329": {"lat": 38.7761826158, "lon": -9.14238225106, "nome": "Av. Santos e Castro", "freguesia": "Olivais"}, "3343": {"lat": 38.7761826158, "lon": -9.1172294231, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3688": {"lat": 38.7901877431, "lon": -9.09027996458, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3381": {"lat": 38.7775832523, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3131": {"lat": 38.7705797947, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3175": {"lat": 38.7719805412, "lon": -9.12082268424, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3338": {"lat": 38.7761826158, "lon": -9.12621257595, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3230": {"lat": 38.7733812602, "lon": -9.12261931481, "nome": "Segunda Circular {Relógio - A2}", "freguesia": "Olivais"}, "3222": {"lat": 38.7733812602, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "3301": {"lat": 38.7747819518, "lon": -9.09387322572, "nome": "Av. da Boa Esperança", "freguesia": "Parque das Nações"}, "3353": {"lat": 38.7761826158, "lon": -9.09207659515, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3386": {"lat": 38.7775832523, "lon": -9.12800920651, "nome": "Figo Maduro", "freguesia": "Olivais"}, "3186": {"lat": 38.7719805412, "lon": -9.10105974799, "nome": "Bairro Laranjeiras", "freguesia": "Parque das Nações"}, "3448": {"lat": 38.7789838613, "lon": -9.09387322572, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3351": {"lat": 38.7761826158, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3647": {"lat": 38.7873869377, "lon": -9.09926311742, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3433": {"lat": 38.7789838613, "lon": -9.12980583708, "nome": "Aeroporto", "freguesia": "Olivais"}, "3569": {"lat": 38.7831855233, "lon": -9.09566985629, "nome": "Parque das Nações", "freguesia": "Parque das Nações"}, "3597": {"lat": 38.7845860222, "lon": -9.10105974799, "nome": "Av. Dom João II", "freguesia": "Parque das Nações"}, "3342": {"lat": 38.7761826158, "lon": -9.11902605367, "nome": "Bairro da Encarnação", "freguesia": "Olivais"}, "3345": {"lat": 38.7761826158, "lon": -9.11363616197, "nome": "Olivais Norte", "freguesia": "Olivais"}, "3172": {"lat": 38.7719805412, "lon": -9.12621257595, "nome": "Aeroporto - Terminal 1", "freguesia": "Olivais"}, "2815": {"lat": 38.7635756494, "lon": -9.13160246765, "nome": "Segunda Circular - Terminal 2", "freguesia": "Olivais"}, "2819": {"lat": 38.7635756494, "lon": -9.12441594538, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2809": {"lat": 38.7635756494, "lon": -9.14238225106, "nome": "Segunda Circular {Campo Grande - Terminal 2}", "freguesia": "Olivais"}, "2810": {"lat": 38.7635756494, "lon": -9.14058562049, "nome": "Segunda Circular {Campo Grande - Terminal 2}", "freguesia": "Olivais"}, "2639": {"lat": 38.7593728322, "lon": -9.1172294231, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2642": {"lat": 38.7593728322, "lon": -9.1118395314, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Olivais"}, "2758": {"lat": 38.7621747379, "lon": -9.12441594538, "nome": "Av. Marechal Gomes da Costa", "freguesia": "Marvila"}, "2710": {"lat": 38.7607737988, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "2687": {"lat": 38.7607737988, "lon": -9.14238225106, "nome": "Laboratório Nacional de Engenharia Civil", "freguesia": "Alvalade"}, "2705": {"lat": 38.7607737988, "lon": -9.11004290083, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2828": {"lat": 38.7635756494, "lon": -9.10824627026, "nome": "Olivais, junto Cemitério", "freguesia": "Olivais"}, "2829": {"lat": 38.7635756494, "lon": -9.1064496397, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2648": {"lat": 38.7593728322, "lon": -9.10105974799, "nome": "Rua da Centieira", "freguesia": "Parque das Nações"}, "2747": {"lat": 38.7621747379, "lon": -9.14417888163, "nome": "Segunda Circular {Campo Grande - Terminal 2}", "freguesia": "Alvalade"}, "2637": {"lat": 38.7593728322, "lon": -9.12082268424, "nome": "Feira do Relógio", "freguesia": "Marvila"}, "2708": {"lat": 38.7607737988, "lon": -9.10465300913, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2697": {"lat": 38.7607737988, "lon": -9.12441594538, "nome": "Flamengas", "freguesia": "Marvila"}, "2883": {"lat": 38.7649765335, "lon": -9.1172294231, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2889": {"lat": 38.7649765335, "lon": -9.1064496397, "nome": "Olivais, junto Cemitério", "freguesia": "Olivais"}, "2931": {"lat": 38.76637739, "lon": -9.13699235936, "nome": "Aeroporto", "freguesia": "Olivais"}, "2938": {"lat": 38.76637739, "lon": -9.12441594538, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2927": {"lat": 38.76637739, "lon": -9.14417888163, "nome": "Aeroporto", "freguesia": "Olivais"}, "2928": {"lat": 38.76637739, "lon": -9.14238225106, "nome": "Aeroporto", "freguesia": "Olivais"}, "2818": {"lat": 38.7635756494, "lon": -9.12621257595, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2935": {"lat": 38.76637739, "lon": -9.12980583708, "nome": "Acessos Aeroporto", "freguesia": "Olivais"}, "2947": {"lat": 38.76637739, "lon": -9.10824627026, "nome": "Olivais, junto Cemitério", "freguesia": "Olivais"}, "2940": {"lat": 38.76637739, "lon": -9.12082268424, "nome": "Olivais Sul", "freguesia": "Olivais"}, "2888": {"lat": 38.7649765335, "lon": -9.10824627026, "nome": "Olivais, junto Cemitério", "freguesia": "Olivais"}};
-    ARCOS_SQL_IDS     = '3181,3133,3628,3001,3217,3168,3059,3169,3126,3560,3524,3684,3561,3603,2714,2813,2635,2820,2808,2694,2686,2702,2700,3672,3058,3056,2996,3104,2896,2997,3117,1912,3525,2693,3182,3000,3651,3534,3239,3327,3669,3728,3376,3424,3698,3571,3520,3587,3346,3623,3277,3435,3127,3129,3284,3162,3441,3558,3402,3555,3470,3472,3599,3740,3513,3554,3645,3702,3429,3400,3593,3528,3736,3391,3328,3518,3741,3300,3335,3687,3177,3482,3490,3714,3664,3533,3399,3529,2650,2746,2890,2930,2823,2830,2765,2755,2953,2827,2767,2875,3005,3103,3064,2998,3114,3071,1983,352,2754,2695,2952,3225,3128,3183,3173,305,304,3227,3185,3700,3730,3717,3586,2691,2654,2651,2825,2653,2699,2627,2704,3006,2892,3070,3111,3068,2891,2999,3115,3108,356,1982,2711,2630,3236,2624,2629,3279,3286,3130,3589,3668,3519,3622,3527,3621,3392,3383,3556,3176,3618,3350,3297,3428,3302,3395,3572,3523,3476,3617,3553,3552,3442,3699,3495,3447,3565,3598,3526,3275,3273,3652,3444,3449,3434,3511,2831,2814,2762,2643,2768,2954,2950,2886,2936,2929,2759,2766,2867,2869,3105,3016,3062,3063,2993,3047,1984,1913,3494,2690,2751,3125,3220,3247,3161,3334,3164,3425,3715,3437,3430,2769,2757,2761,2951,2756,2934,2760,2948,2955,2949,2932,2946,2933,2632,2816,2837,2652,2834,2707,2698,2703,2817,2824,2812,2835,2945,2701,2877,2880,3107,2879,2986,2882,409,3014,3481,3626,3341,3330,3283,3347,3663,3226,3242,3223,3339,3336,3681,3234,3174,3178,3290,3716,3562,3348,3512,3352,3436,3479,3514,3187,3188,3557,3516,3427,3742,3171,3432,3624,3385,3344,3010,3048,3049,3110,2887,2995,3057,3067,2873,2874,3051,3113,3050,2990,351,3245,3179,2750,3531,3731,3588,3726,3394,3590,3737,3296,3493,3727,3287,3401,3697,2748,2640,2764,2647,2822,2638,2709,2706,2692,2775,2770,2771,2926,2876,350,358,357,3439,2685,2646,3012,2633,3485,3002,2649,3484,3568,3594,3282,3163,3349,3333,3380,3288,3298,3564,3118,3491,3167,3559,3291,3596,3521,3487,3281,3289,3121,3337,3683,3280,3488,3331,3166,3189,3235,3303,3384,3471,3276,3285,3532,3480,2872,2870,2871,3072,2878,3061,2894,3009,2885,2989,3060,2994,3052,3743,3054,3180,2836,2626,2689,2623,3165,3450,3240,3738,3233,3224,3377,3232,3218,3191,3219,3243,3184,2688,2713,3704,2628,2636,2641,2807,2749,2696,2715,2991,3066,2992,2893,3486,3438,3011,2712,3440,3246,2944,3641,3648,3190,2625,2942,3426,3517,3685,3535,3625,3431,3293,3701,3595,3241,3719,3379,3299,3272,3703,3477,3739,3489,3388,3570,3686,3390,3446,3563,3592,3665,3389,3718,3667,3551,3619,3729,3646,3119,3229,3473,3398,3600,3387,3124,3397,3475,3120,3378,3231,3643,2811,2832,2644,2645,2634,2826,2772,2821,2763,2833,2773,2776,2774,2939,2987,2937,2884,2881,2956,3004,3075,3065,2752,2941,3601,2943,3238,3642,3123,410,3629,3712,3292,3228,3237,3627,3340,3274,3221,3445,3567,3294,3591,3732,3620,3515,3649,3522,3382,3733,3492,3530,3483,3478,3670,3650,3566,3666,3393,3474,3295,3278,3443,3396,3713,3644,3055,3106,2868,2988,3003,3045,3116,3015,3069,3046,3008,3053,3074,3007,3109,2895,1975,1976,3112,2631,3132,3170,3602,3073,303,408,3122,3013,3671,2753,3332,3244,3682,3329,3343,3688,3381,3131,3175,3338,3230,3222,3301,3353,3386,3186,3448,3351,3647,3433,3569,3597,3342,3345,3172,2815,2819,2809,2810,2639,2642,2758,2710,2687,2705,2828,2829,2648,2747,2637,2708,2697,2883,2889,2931,2938,2927,2928,2818,2935,2947,2940,2888';
-
-    _arcos_grids  = [];
-    _arcos_pairs  = [];   // [{src, T, vol, pts}] — pares calculados
-    _arcos_canvas = null;
-    _arcos_ctx    = null;
-    _arcos_raf    = null;
-    _arcos_t      = 0;    // tempo global da animação 0→1 em loop
-
-    _initArcos() {
-        // Canvas sobre o mapa ML
-        const mapEl = document.getElementById('map');
-        if (!mapEl) return;
-        this._arcos_canvas = document.createElement('canvas');
-        this._arcos_canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:200;';
-        mapEl.appendChild(this._arcos_canvas);
-        this._arcos_ctx = this._arcos_canvas.getContext('2d');
-
-        // Redesenhar quando o mapa move
-        this.map.on('move', () => this._arcosRedraw());
-        this.map.on('zoom', () => this._arcosRedraw());
-
-        // Arrancar animação
-        this._arcosAnimate();
-
-        // Carregar dados
-        this._loadArcosData();
-        console.log('🌐 Arcos animados iniciados');
-    }
-
-    _loadArcosData() {
-        const sql = `SELECT grid_id,
-                COALESCE("C5",0)::DOUBLE AS c5,
-                COALESCE("C6",0)::DOUBLE AS c6
-            FROM raw_coi_tematica_lx_indicadores_a
-            WHERE grid_id IN (${this.ARCOS_SQL_IDS})
-              AND date = (SELECT MAX(date) FROM raw_coi_tematica_lx_indicadores_a WHERE grid_id=3181)`;
-        CCOC.Functions.ac_executa_crate_sql(sql, 'select', 5000)
-            .then(data => {
-                if (!data||!data.length) { console.warn('🌐 Arcos: 0 registos'); return; }
-                this._arcos_grids = data.map(r => {
-                    const m = this.ARCOS_GRID_LOOKUP[String(r.grid_id)];
-                    if (!m) return null;
-                    return {grid_id:r.grid_id,lon:m.lon,lat:m.lat,nome:m.nome||'',
-                            C5:Number(r.c5)||0,C6:Number(r.c6)||0};
-                }).filter(Boolean);
-                console.log(`🌐 Arcos: ${this._arcos_grids.length} grids`);
-                this._buildArcosPairs();
-            })
-            .catch(err => console.warn('Arcos data falhou:', err));
-    }
-
-    _haversineA(la1,lo1,la2,lo2) {
-        const R=6371000,dLat=(la2-la1)*Math.PI/180,dLon=(lo2-lo1)*Math.PI/180;
-        const a=Math.sin(dLat/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLon/2)**2;
-        return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-    }
-
-    _buildArcosPairs() {
-        const pairs = this._arcos_grids.map(g => {
-            const d = this._haversineA(g.lat,g.lon,this.PARQUE_LAT,this.PARQUE_LON);
-            if (d < this.ARCOS_MIN_DIST || g.C6 < 3) return null;
-            return {g, d, T: g.C6 / Math.pow(d, this.ARCOS_BETA)};
-        }).filter(Boolean);
-        pairs.sort((a,b) => b.T-a.T);
-        const maxT = pairs[0]?.T || 1;
-        this._arcos_pairs = pairs.slice(0, this.ARCOS_TOP).map(({g,d,T}) => {
-            const vol = Math.min(1, T/maxT);
-            // Velocidade: arcos maiores movem mais lento
-            const speed = 0.004 + (1-vol)*0.003;
-            // Partículas com fases distribuídas para não ficarem juntas
-            const particles = Array.from({length:this.ARCOS_PARTICLES}, (_,i) => ({
-                phase: i/this.ARCOS_PARTICLES,  // 0, 0.33, 0.66
-                speed: speed * (0.85 + i*0.1)   // velocidades ligeiramente diferentes
-            }));
-            return {g, vol, T, d, particles};
-        });
-        console.log(`🌐 Arcos pares: ${this._arcos_pairs.length}`);
-        this._arcosRedraw();
-    }
-
-    // Converter lon/lat → pixel via MapLibre
-    _ll2pxML(lon, lat) {
-        return this.map.project([lon, lat]);
-    }
-
-    // Ponto ao longo de uma curva Bézier quadrática (t ∈ 0→1)
-    _bezierPt(p0x,p0y,p1x,p1y,p2x,p2y,t) {
-        const mt=1-t;
-        return [mt*mt*p0x+2*mt*t*p1x+t*t*p2x, mt*mt*p0y+2*mt*t*p1y+t*t*p2y];
-    }
-
-    _arcosAnimate() {
-        this._arcos_raf = requestAnimationFrame(() => this._arcosAnimate());
-        this._arcos_t = (this._arcos_t + 0.004) % 1;
-        this._arcosRedraw();
-    }
-
-    _arcosRedraw() {
-        const canvas = this._arcos_canvas;
-        const ctx    = this._arcos_ctx;
-        if (!canvas || !ctx || !this.map) return;
-
-        const mapEl = document.getElementById('map');
-        canvas.width  = mapEl.offsetWidth;
-        canvas.height = mapEl.offsetHeight;
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-
-        if (!this._arcos_pairs.length) return;
-
-        const dst = this._ll2pxML(this.PARQUE_LON, this.PARQUE_LAT);
-
-        this._arcos_pairs.forEach(({g, vol, particles}) => {
-            const src = this._ll2pxML(g.lon, g.lat);
-            const dx=dst.x-src.x, dy=dst.y-src.y;
-            const len=Math.sqrt(dx*dx+dy*dy)+1e-10;
-            const cx=(src.x+dst.x)/2-(dy/len)*len*0.35;
-            const cy=(src.y+dst.y)/2+(dx/len)*len*0.35;
-
-            // ── Linha de fundo (arco estático subtil) ──
-            ctx.save();
-            ctx.beginPath(); ctx.moveTo(src.x,src.y);
-            ctx.quadraticCurveTo(cx,cy,dst.x,dst.y);
-            ctx.strokeStyle = `rgba(255,140,0,${0.15*vol})`;
-            ctx.lineWidth   = 0.5 + vol;
-            ctx.stroke();
-            ctx.restore();
-
-            // ── Partículas animadas ──
-            particles.forEach(({phase, speed}) => {
-                const t = ((this._arcos_t * speed / 0.004) + phase) % 1;
-                const [px,py] = this._bezierPt(src.x,src.y,cx,cy,dst.x,dst.y,t);
-
-                // Tamanho e opacidade: maior no meio do percurso
-                const midT = 1 - Math.abs(t-0.5)*2; // 0 nas pontas, 1 no meio
-                const r  = 2.5 + midT*3*vol;
-                const op = 0.4 + midT*0.6;
-
-                // Glow exterior
-                const glow = ctx.createRadialGradient(px,py,0,px,py,r*3.5);
-                glow.addColorStop(0,   `rgba(255,200,50,${op*vol*0.8})`);
-                glow.addColorStop(0.4, `rgba(255,120,0,${op*vol*0.4})`);
-                glow.addColorStop(1,   'rgba(0,0,0,0)');
-                ctx.save();
-                ctx.beginPath(); ctx.arc(px,py,r*3.5,0,Math.PI*2);
-                ctx.fillStyle=glow; ctx.fill();
-                ctx.restore();
-
-                // Núcleo brilhante
-                const core = ctx.createRadialGradient(px,py,0,px,py,r);
-                core.addColorStop(0,   `rgba(255,255,200,${op})`);
-                core.addColorStop(0.5, `rgba(255,160,0,${op*0.9})`);
-                core.addColorStop(1,   `rgba(220,60,0,${op*0.3})`);
-                ctx.save();
-                ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
-                ctx.fillStyle=core; ctx.fill();
-                ctx.restore();
-            });
-        });
-    }
-
-    updateAllCards() {
-        // Actualizar cards que dependem da vista (Waze, Alertas)
-        if (this._wazeJamsFeats) this.updateTrafegoCard(this._wazeJamsFeats);
-    }
-
-    ngOnDestroy() { if (this.refreshTimer) clearInterval(this.refreshTimer); }
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGIL - Smart City of Rock</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#0b0f14;--card:#151b22;--gold:#D4AF37;--green:#2ECC71;--blue:#00c2ff;--text:#fff;--muted:#9aa6b2;
 }
+*{box-sizing:border-box} body{margin:0;font-family:Inter,sans-serif;background:
+radial-gradient(circle at top left,rgba(0,194,255,.08),transparent 25%),
+radial-gradient(circle at bottom right,rgba(212,175,55,.08),transparent 35%),var(--bg);color:var(--text)}
+.container{max-width:1400px;margin:auto;padding:30px}
+.hero{background:linear-gradient(135deg,#111821,#1b2430);border:1px solid rgba(212,175,55,.25);border-radius:24px;padding:32px;position:relative}
+.status{position:absolute;right:25px;top:25px;color:var(--green);font-weight:700}
+.brand{font-family:Orbitron,sans-serif;color:var(--gold);letter-spacing:3px}
+h1{font-family:Orbitron,sans-serif;font-size:3rem;margin:10px 0}
+.subtitle{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+.stat{background:var(--card);padding:20px;border-radius:18px}
+.label{font-size:.85rem;color:var(--muted)}
+.value{font-size:2rem;color:var(--gold);font-weight:700;margin-top:8px}
+.actions{text-align:center;margin:20px 0}
+button{border:none;border-radius:30px;padding:14px 26px;font-weight:700;cursor:pointer;margin:5px}
+.gen{background:var(--gold)} .clr{background:#27313d;color:#fff}
+#loading{text-align:center;color:var(--blue);display:none;padding:15px}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{background:var(--card);border-radius:20px;padding:20px}
+.day{font-family:Orbitron;color:var(--gold)}
+.date{font-size:1.4rem;margin:8px 0}
+.time{color:var(--muted);margin-bottom:15px}
+.slot{padding:10px;border-radius:10px;margin:8px 0}
+.full{background:rgba(46,204,113,.12);border-left:4px solid var(--green)}
+.half{background:rgba(212,175,55,.12);border-left:4px solid var(--gold)}
+.summary{background:var(--card);border-radius:20px;padding:25px;margin-top:20px}
+.row{display:flex;justify-content:space-between;padding:8px 0}
+.bar{height:10px;background:#24303d;border-radius:20px;overflow:hidden;width:180px}
+.fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold))}
+.footer{text-align:center;color:var(--muted);margin-top:20px}
+.empty{color:#667}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="hero">
+<div class="status">● DIGITAL TWIN MODE ONLINE</div>
+<div class="brand">PGIL</div>
+<h1>SMART CITY OF ROCK</h1>
+<div class="subtitle">Real-Time Urban Intelligence @ Rock in Rio Lisboa</div>
+</div>
+
+<div class="stats">
+<div class="stat"><div class="label">OPERADORES ATIVOS</div><div class="value">5</div></div>
+<div class="stat"><div class="label">COBERTURA TOTAL</div><div class="value">120h</div></div>
+<div class="stat"><div class="label">ÍNDICE DE EQUILÍBRIO</div><div class="value" id="equity">--</div></div>
+</div>
+
+<div class="actions">
+<button class="gen" onclick="generate()">⚙ GERAR CENÁRIO</button>
+<button class="clr" onclick="drawEmpty()">🧹 LIMPAR</button>
+</div>
+
+<div id="loading">A ligar à PGIL...<br>A carregar modelos de inteligência urbana...<br>A otimizar recursos humanos...</div>
+
+<div id="days" class="days"></div>
+
+<div class="summary">
+<h2>⚖ Equilíbrio Operacional</h2>
+<div id="summary"></div>
+</div>
+
+<div class="footer">
+PGIL • Plataforma de Gestão Inteligente de Lisboa<br>
+Smart City of Rock • Operações de Inteligência Urbana
+</div>
+</div>
+
+<script>
+const people=["António Costa","Angela Gasalho","Paula Melícias","Susana Marques","Valter Ferreira"];
+
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+function drawEmpty(){
+document.getElementById('days').innerHTML=[
+["EVENT DAY 01","18 Junho","17h-22h"],
+["EVENT DAY 02","20 Junho","13h-23h"],
+["EVENT DAY 03","21 Junho","13h-23h"],
+["EVENT DAY 04","27 Junho","13h-23h"],
+["EVENT DAY 05","28 Junho","13h-23h"]
+].map(d=>`<div class="card"><div class="day">${d[0]}</div><div class="date">${d[1]}</div><div class="time">${d[2]}</div><div class="empty">Cenário não gerado</div></div>`).join("");
+document.getElementById('summary').innerHTML="";
+document.getElementById('equity').innerHTML="--";
+}
+
+function generate(){
+loading.style.display='block';
+setTimeout(()=>{
+let best=null,bestScore=999999;
+
+for(let t=0;t<50000;t++){
+let hours={}; people.forEach(p=>hours[p]=0);
+let sched=[];
+
+sched.push({title:"EVENT DAY 01",date:"18 Junho",time:"17h-22h",slots:[
+["Angela Gasalho","full",5],["Paula Melícias","full",5],["Susana Marques","full",5],["Valter Ferreira","full",5]
+]});
+
+["20 Junho","21 Junho","27 Junho","28 Junho"].forEach((d,i)=>{
+let a=[...people];
+if(d==="28 Junho") a=a.filter(x=>x!=="Susana Marques");
+a=shuffle(a);
+sched.push({title:`EVENT DAY 0${i+2}`,date:d,time:"13h-23h",slots:[
+[a[0],"full",10],[a[1],"full",10],[a[2],"half",5]
+]});
+});
+
+sched.forEach(day=>day.slots.forEach(s=>hours[s[0]]+=s[2]));
+let vals=Object.values(hours);
+let score=Math.max(...vals)-Math.min(...vals);
+if(score<bestScore){bestScore=score;best={sched,hours};}
+}
+
+render(best);
+loading.style.display='none';
+},900);
+}
+
+function render(data){
+days.innerHTML=data.sched.map(d=>`
+<div class="card">
+<div class="day">${d.title}</div>
+<div class="date">${d.date}</div>
+<div class="time">${d.time}</div>
+${d.slots.map(s=>`<div class="slot ${s[1]}">${s[0]}${s[1]=='half' ? '<br><small>(REFORÇO)</small>':''}</div>`).join('')}
+</div>`).join('');
+
+let max=Math.max(...Object.values(data.hours));
+summary.innerHTML=Object.entries(data.hours).sort((a,b)=>b[1]-a[1]).map(([n,h])=>`
+<div class="row">
+<div>${n} — <strong>${h}h</strong></div>
+<div class="bar"><div class="fill" style="width:${(h/max)*100}%"></div></div>
+</div>`).join('');
+
+let vals=Object.values(data.hours);
+equity.innerHTML=(100-(Math.max(...vals)-Math.min(...vals))*2)+"%";
+}
+
+drawEmpty();
+</script>
+</body>
+</html>
